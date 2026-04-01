@@ -161,7 +161,7 @@
         <div class="flex items-center gap-4">
             <h1 class="text-xl font-black italic text-[#00FC41] tracking-widest font-headline">SHC STATS</h1>
         </div>
-        <div class="hidden sm:flex items-center gap-1">
+        <div class="fixed bottom-0 left-0 w-full bg-[#0e0e0e]/95 backdrop-blur-3xl border-t border-outline-variant/20 sm:border-none sm:bg-transparent sm:static sm:w-auto flex overflow-x-auto no-scrollbar items-center gap-6 sm:gap-1 px-6 sm:px-0 py-1 sm:py-0 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] sm:shadow-none">
             {% if session.get('player_id') %}
             <a href="{{ url_for('my_stats') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'my_stats' %}nav-link-active{% else %}nav-link{% endif %}">
                 My Stats
@@ -200,7 +200,7 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="border-t border-outline-variant/20 mt-auto py-6 bg-surface-container-lowest">
+    <footer class="border-t border-outline-variant/20 mt-auto pt-6 pb-20 sm:pb-6 bg-surface-container-lowest">
         <div class="max-w-7xl mx-auto px-4">
             <p class="text-center text-[10px] text-on-surface-variant uppercase tracking-[0.2em] font-bold">© Suraj Neralla</p>
         </div>
