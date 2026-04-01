@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cricket-stats-v2';
+const CACHE_NAME = 'cricket-stats-v3';
 const urlsToCache = [
   '/manifest.json'
 ];

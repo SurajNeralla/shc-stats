@@ -38,9 +38,12 @@ def player_image_url(name):
     if not name:
         return ''
     lower = name.lower()
+    from flask import url_for
     for key, path in _NAME_IMAGE_MAP.items():
         if key in lower:
-            return path
+            # path is e.g. /static/images/suraj.jpg.jpeg
+            filename = path.replace('/static/', '')
+            return url_for('static', filename=filename)
     return ''
 
 app.jinja_env.globals['player_image_url'] = player_image_url
