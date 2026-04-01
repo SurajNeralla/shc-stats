@@ -190,3 +190,61 @@ def get_match_history():
 
 def get_fantasy_leaderboard():
     return supabase.table("players").select("*").order("total_score", desc=True).order("total_fantasy_points", desc=True).execute().data
+
+def get_fantasy_match(match_id):
+    """Fetch a single match with all its entries and player details."""
+    res = supabase.table("matches").select(
+        "id, match_number, entries(id, score, fantasy_points, rank, player_id, players(id, name, image_url, total_score, total_fantasy_points))"
+    ).eq("id", match_id).execute()
+    if res.data:
+        match = res.data[0]
+        match['entries'].sort(key=lambda x: x['rank'])
+        return match
+    return None
+
+def recalculate_all_player_totals():
+    """Rebuild total_score and total_fantasy_points for every player from scratch."""
+    all_entries = supabase.table("entries").select("player_id, score, fantasy_points").execute().data
+    totals = {}
+    for e in all_entries:
+        pid = e['player_id']
+        if pid not in totals:
+            totals[pid] = {'total_score': 0.0, 'total_fantasy_points': 0.0}
+        totals[pid]['total_score'] += float(e.get('score') or 0)
+        totals[pid]['total_fantasy_points'] += float(e.get('fantasy_points') or 0)
+
+    # Zero-out players with no entries at all
+    all_players = supabase.table("players").select("id").execute().data
+    for p in all_players:
+        pid = p['id']
+        if pid not in totals:
+            totals[pid] = {'total_score': 0.0, 'total_fantasy_points': 0.0}
+
+    for pid, data in totals.items():
+        supabase.table("players").update(data).eq("id", pid).execute()
+
+def update_fantasy_match(match_id, player_scores_list):
+    """Update entries in a match, re-rank, then recalculate all player totals from scratch."""
+    # Recalculate ranks based on new scores
+    player_scores_list.sort(key=lambda x: (x['score'], x['fantasy_points']), reverse=True)
+    for i in range(len(player_scores_list)):
+        if i > 0:
+            prev = player_scores_list[i - 1]
+            curr = player_scores_list[i]
+            if curr['score'] == prev['score'] and curr['fantasy_points'] == prev['fantasy_points']:
+                curr['rank'] = prev['rank']
+            else:
+                curr['rank'] = i + 1
+        else:
+            player_scores_list[i]['rank'] = 1
+
+    # Push updated entries to DB
+    for p in player_scores_list:
+        supabase.table("entries").update({
+            "score": p['score'],
+            "fantasy_points": p['fantasy_points'],
+            "rank": p['rank']
+        }).eq("id", p['entry_id']).execute()
+
+    # Rebuild all player totals cleanly from scratch
+    recalculate_all_player_totals()

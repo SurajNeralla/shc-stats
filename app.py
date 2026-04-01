@@ -11,7 +11,8 @@ from models import (
     create_player_stats, update_player_stats, get_leaderboard_runs, get_leaderboard_wickets, delete_player,
     get_match_logs, add_match_log, delete_match_log, get_player_by_email,
     # New Fantasy Features
-    create_premium_match, get_fantasy_leaderboard, get_match_history
+    create_premium_match, get_fantasy_leaderboard, get_match_history,
+    get_fantasy_match, update_fantasy_match
 )
 
 app = Flask(__name__)
@@ -265,6 +266,40 @@ def fantasy_history():
     matches = get_match_history()
     is_admin = 'admin_token' in session
     return render_template('fantasy_history.html', matches=matches, is_admin=is_admin)
+
+@app.route('/fantasy/matches/<match_id>/edit', methods=['GET', 'POST'])
+def edit_fantasy_match(match_id):
+    if 'admin_token' not in session:
+        flash("Only admins can edit fantasy matches.", "error")
+        return redirect(url_for('fantasy_history'))
+
+    match = get_fantasy_match(match_id)
+    if not match:
+        flash("Match not found.", "error")
+        return redirect(url_for('fantasy_history'))
+
+    if request.method == 'POST':
+        player_scores = []
+        for entry in match['entries']:
+            entry_id = str(entry['id'])
+            score_str = request.form.get(f"score_{entry_id}")
+            fp_str = request.form.get(f"fantasy_points_{entry_id}")
+            player_scores.append({
+                "entry_id": entry['id'],
+                "player_id": entry['player_id'],
+                "score": float(score_str or 0),
+                "fantasy_points": float(fp_str or 0)
+            })
+
+        try:
+            update_fantasy_match(match_id, player_scores)
+            flash(f"Match #{match['match_number']} updated and rankings recalculated!", "success")
+        except Exception as e:
+            flash(f"Error updating match: {str(e)}", "error")
+
+        return redirect(url_for('fantasy_history'))
+
+    return render_template('fantasy_edit_form.html', match=match)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

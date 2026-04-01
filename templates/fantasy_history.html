@@ -18,12 +18,23 @@
                     <span class="text-[10px] font-black uppercase tracking-widest text-neutral-400">{{ match.created_at[:10] }}</span>
                     <h2 class="text-2xl sm:text-3xl font-black text-neutral-900 tracking-tight mt-1">Match #{{ match.match_number }}</h2>
                 </div>
-                {% if match.locked %}
-                <span class="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black bg-neutral-50 border border-neutral-200 text-neutral-400 uppercase tracking-widest shadow-sm">
-                    <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                    Locked
-                </span>
-                {% endif %}
+                <div class="flex items-center gap-3">
+                    {% if is_admin %}
+                    <a href="{{ url_for('edit_fantasy_match', match_id=match.id) }}"
+                       class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black bg-indigo-50 border border-indigo-200 text-indigo-600 uppercase tracking-widest shadow-sm hover:bg-indigo-100 hover:border-indigo-300 transition-all">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828A2 2 0 019 16H7v-2a2 2 0 01.586-1.414z"/>
+                        </svg>
+                        Edit
+                    </a>
+                    {% endif %}
+                    {% if match.locked %}
+                    <span class="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black bg-neutral-50 border border-neutral-200 text-neutral-400 uppercase tracking-widest shadow-sm">
+                        <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        Locked
+                    </span>
+                    {% endif %}
+                </div>
             </div>
 
             <!-- Podium Layout Inside Card -->
