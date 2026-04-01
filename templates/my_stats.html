@@ -5,8 +5,9 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
     <!-- Player Header -->
     <div class="kinetic-gradient-border p-6 shadow-2xl mb-8 flex items-center gap-6">
-        {% if player.image_url %}
-        <img class="h-20 w-20 rounded-2xl object-cover border-2 border-primary/30 shadow-lg" src="{{ player.image_url }}" alt="">
+        {% set img_path = player.image_url if (player.image_url and player.image_url.startswith('/static/')) else player_image_url(player.name) %}
+        {% if img_path %}
+        <img class="h-20 w-20 rounded-2xl object-cover border-2 border-primary/30 shadow-lg" src="{{ img_path }}" alt="">
         {% else %}
         <div class="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-3xl font-headline font-black border-2 border-primary/30">
             {{ player.name[0] }}

@@ -19,6 +19,34 @@ from models import (
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "super-secret-default")
 
+# Name → local static image map (used as fallback if DB image_url is empty)
+_NAME_IMAGE_MAP = {
+    'suraj':   '/static/images/suraj.jpg.jpeg',
+    'sashank': '/static/images/sashank.jpeg',
+    'saran':   '/static/images/saran.jpeg',
+    'abhi':    '/static/images/abhi.jpeg',
+    'deepu':   '/static/images/deepu.jpeg',
+    'kl':      '/static/images/deepu.jpeg',
+    'sunny':   '/static/images/sunny.jpeg',
+    'pavan':   '/static/images/pavan.jpeg',
+    'prabhas': '/static/images/prabhas.jpeg',
+    'sailesh': '/static/images/sailesh.jpeg',
+}
+
+def player_image_url(name):
+    """Return the best image path for a player — DB url if set, else map by name."""
+    if not name:
+        return ''
+    lower = name.lower()
+    for key, path in _NAME_IMAGE_MAP.items():
+        if key in lower:
+            return path
+    return ''
+
+app.jinja_env.globals['player_image_url'] = player_image_url
+
+
+
 @app.route('/sw.js')
 def serve_sw():
     return send_from_directory('static', 'sw.js', mimetype='application/javascript')

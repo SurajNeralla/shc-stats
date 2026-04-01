@@ -68,8 +68,9 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
-                                {% if player.image_url %}
-                                <img class="h-10 w-10 rounded-xl object-cover border border-outline-variant/20" src="{{ player.image_url }}" alt="">
+                                {% set img_path = player.image_url if (player.image_url and player.image_url.startswith('/static/')) else player_image_url(player.name) %}
+                                {% if img_path %}
+                                <img class="h-10 w-10 rounded-xl object-cover border border-outline-variant/20" src="{{ img_path }}" alt="">
                                 {% else %}
                                 <div class="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-headline font-black text-lg">
                                     {{ player.name[0] }}
