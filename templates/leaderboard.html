@@ -28,6 +28,7 @@
                     <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Player</th>
                     <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Matches</th>
                     <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Runs</th>
+                    <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Wickets</th>
                     <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Avg</th>
                     <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">100s / 50s</th>
                 </tr>
@@ -59,13 +60,14 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.matches }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-headline font-black text-on-surface">{{ l.runs }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.wickets }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">
                         {% if l.matches %}{{ "%.1f"|format(l.runs/l.matches) }}{% else %}0.0{% endif %}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.hundreds }} / {{ l.fifties }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="6" class="px-6 py-12 text-center text-sm text-on-surface-variant">No data yet</td></tr>
+                <tr><td colspan="7" class="px-6 py-12 text-center text-sm text-on-surface-variant">No data yet</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -86,7 +88,8 @@
                     <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Player</th>
                     <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Matches</th>
                     <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Wickets</th>
-                    <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Overs</th>
+                    <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Runs Scored</th>
+                    <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">O/M/R/W</th>
                     <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Econ</th>
                 </tr>
             </thead>
@@ -117,13 +120,14 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.matches }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-headline font-black text-on-surface">{{ l.wickets }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.overs_bowled }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.runs }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.overs_bowled }} / {{ l.maidens }} / {{ l.runs_conceded }} / {{ l.wickets }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">
                         {% if l.overs_bowled %}{{ "%.2f"|format(l.runs_conceded/l.overs_bowled) }}{% else %}0.00{% endif %}
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="6" class="px-6 py-12 text-center text-sm text-on-surface-variant">No data yet</td></tr>
+                <tr><td colspan="7" class="px-6 py-12 text-center text-sm text-on-surface-variant">No data yet</td></tr>
                 {% endfor %}
             </tbody>
         </table>
