@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Log Match - SkyHigh League{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-8 w-full">
+    <div>
+        <h1 class="text-3xl font-extrabold tracking-tight text-neutral-900">Log Match Results</h1>
+        <p class="text-neutral-500 mt-2 font-medium">Enter the final score for every active player. Ties will be automatically broken using lifetime totals.</p>
+    </div>
+    <form action="{{ url_for('add_fantasy_match') }}" method="POST" class="bg-white p-6 sm:p-10 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-neutral-100 space-y-8 relative overflow-hidden">
+        
+        <div class="space-y-2 relative z-10">
+            <label class="block text-sm font-bold text-neutral-900 uppercase tracking-wider">Match Identifier</label>
+            <input type="number" name="match_number" required placeholder="e.g. 1" class="appearance-none block w-full px-5 py-4 border border-neutral-200 placeholder-neutral-400 text-neutral-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent sm:text-base font-bold transition-all shadow-sm bg-neutral-50 hover:bg-white">
+        </div>
+
+        <div class="space-y-4 pt-6 border-t border-neutral-100 relative z-10">
+            <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-4">Player Score Inputs</h3>
+            
+            {% for player in players %}
+            <div class="flex items-center justify-between p-3 sm:p-4 bg-white rounded-2xl border border-neutral-200 hover:border-neutral-300 hover:shadow-md transition-all match-row group">
+                <div class="flex items-center gap-4">
+                    {% if player.image_url %}
+                        <img src="{{ player.image_url }}" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover shadow-sm bg-neutral-100" alt="">
+                    {% else %}
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500 font-bold shadow-sm">
+                            {{ player.name[0] }}
+                        </div>
+                    {% endif %}
+                    <div>
+                        <span class="font-bold text-neutral-900 group-hover:text-indigo-600 transition-colors">{{ player.name }}</span>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Score: {{ player.total_score }} | FPts: {{ player.total_fantasy_points }}</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <input type="number" step="0.1" name="score_{{ player.id }}" placeholder="Score" class="w-20 sm:w-28 text-center px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-black text-lg bg-neutral-50 shadow-inner transition-all text-neutral-900">
+                    <input type="number" step="0.1" name="fantasy_points_{{ player.id }}" placeholder="F. Points" class="w-20 sm:w-28 text-center px-4 py-3 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-black text-lg bg-neutral-50 shadow-inner transition-all text-neutral-900">
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="pt-8 relative z-10">
+            <button type="submit" class="w-full flex justify-center py-4 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-neutral-900 hover:bg-neutral-800 transition-all active:scale-[0.98] shadow-xl shadow-neutral-900/10 input-submit">
+                Lock Match & Distribute Points &rarr;
+            </button>
+        </div>
+        
+        <!-- Background decorative shape -->
+        <div class="absolute bottom-0 right-0 w-64 h-64 bg-neutral-50 rounded-tl-full -z-0"></div>
+    </form>
+</div>
+<script>
+    Motion.animate(".match-row", { opacity: [0, 1], y: [15, 0] }, { delay: Motion.stagger(0.04), duration: 0.5, easing: "circOut" });
+</script>
+{% endblock %}

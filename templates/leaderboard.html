@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Leaderboards{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full block space-y-8">
+    
+    <div>
+        <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl">Top Run Scorers</h2>
+        <div class="mt-4 shadow overflow-hidden border-b border-gray-200 sm:rounded-lg block">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-indigo-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider text-center w-16">Rank</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">Player</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">Matches</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">Runs</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">Avg</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">100s / 50s</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for l in runs_leaders %}
+                    <tr class="{% if loop.index <= 3 %}bg-yellow-50{% endif %} hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-center font-bold text-gray-900">{{ loop.index }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-3">
+                                {% if l.players.image_url %}
+                                <img src="{{ l.players.image_url }}" class="w-8 h-8 rounded-full border border-gray-200">
+                                {% endif %}
+                                <span class="font-medium text-indigo-600">{{ l.players.name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ l.matches }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{{ l.runs }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if l.matches %}{{ "%.1f"|format(l.runs/l.matches) }}{% else %}0.0{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ l.hundreds }} / {{ l.fifties }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="px-6 py-4 text-center">No data</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div>
+        <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl">Top Wicket Takers</h2>
+        <div class="mt-4 shadow overflow-hidden border-b border-gray-200 sm:rounded-lg block">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-red-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-red-800 uppercase tracking-wider text-center w-16">Rank</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-red-800 uppercase tracking-wider">Player</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-red-800 uppercase tracking-wider">Matches</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-red-800 uppercase tracking-wider">Wickets</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-red-800 uppercase tracking-wider">Overs</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-red-800 uppercase tracking-wider">Econ</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for l in wickets_leaders %}
+                    <tr class="{% if loop.index <= 3 %}bg-yellow-50{% endif %} hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-center font-bold text-gray-900">{{ loop.index }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-3">
+                                {% if l.players.image_url %}
+                                <img src="{{ l.players.image_url }}" class="w-8 h-8 rounded-full border border-gray-200">
+                                {% endif %}
+                                <span class="font-medium text-red-600">{{ l.players.name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ l.matches }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{{ l.wickets }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ l.overs_bowled }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if l.overs_bowled %}{{ "%.2f"|format(l.runs_conceded/l.overs_bowled) }}{% else %}0.00{% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="px-6 py-4 text-center">No data</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

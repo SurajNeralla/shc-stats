@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}My Stats - {{ player.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full block">
+    <div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6 mb-8 flex items-center space-x-6">
+        <div>
+            {% if player.image_url %}
+            <img class="h-24 w-24 rounded-full object-cover" src="{{ player.image_url }}" alt="">
+            {% else %}
+            <div class="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold">
+                {{ player.name[0] }}
+            </div>
+            {% endif %}
+        </div>
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900">{{ player.name }}</h2>
+            <p class="text-lg text-gray-500">{{ player.team }} • {{ player.role }}</p>
+        </div>
+    </div>
+    
+    <!-- Player Stats -->
+    <div class="bg-gray-50 shadow px-4 py-5 sm:rounded-lg sm:p-6 border border-gray-200">
+        <h3 class="text-lg leading-6 font-medium text-gray-900 border-b border-gray-200 pb-2 mb-4">Career Statistics</h3>
+        
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+            <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Matches</div>
+                <div class="text-2xl font-black text-gray-900">{{ stats.matches | default(0) }}</div>
+            </div>
+            <!-- Batting -->
+            <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Runs</div>
+                <div class="text-2xl font-black text-indigo-600">{{ stats.runs | default(0) }}</div>
+            </div>
+            <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Highest Score</div>
+                <div class="text-2xl font-black text-gray-900">{{ stats.highest_score | default(0) }}</div>
+            </div>
+            <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Avg</div>
+                <div class="text-2xl font-black text-gray-900">
+                    {% if stats.matches %}
+                    {{ "%.1f"|format(stats.runs / stats.matches) }}
+                    {% else %}0.0{% endif %}
+                </div>
+            </div>
+            <!-- Bowling -->
+            <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Wickets</div>
+                <div class="text-2xl font-black text-red-600">{{ stats.wickets | default(0) }}</div>
+            </div>
+            <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Bowling Avg</div>
+                <div class="text-2xl font-black text-gray-900">
+                    {% if stats.wickets %}
+                    {{ "%.1f"|format(stats.runs_conceded / stats.wickets) }}
+                    {% else %}0.0{% endif %}
+                </div>
+            </div>
+            <!-- Fielding -->
+            <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Catches</div>
+                <div class="text-2xl font-black text-gray-900">{{ stats.catches | default(0) }}</div>
+            </div>
+            <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Stumpings</div>
+                <div class="text-2xl font-black text-gray-900">{{ stats.stumpings | default(0) }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Match Logs List -->
+    <div class="mt-8 bg-white shadow sm:rounded-lg overflow-hidden border border-gray-200">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Performances</h3>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-white text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Date / Opponent</th>
+                        <th class="px-6 py-3 text-left">Batting (R/B/4s/6s)</th>
+                        <th class="px-6 py-3 text-left">Bowling (O/M/R/W)</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for log in logs %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div class="font-bold">{{ log.match_date }}</div>
+                            <div class="text-gray-500">vs {{ log.opponent }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <span class="font-bold border px-2 py-0.5 rounded bg-gray-50">{{ log.runs }}</span> / 
+                            <span class="text-gray-500">{{ log.balls_faced }}</span> / 
+                            <span class="text-green-600">{{ log.fours }}x4</span> / 
+                            <span class="text-blue-600">{{ log.sixes }}x6</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {{ log.overs_bowled }} / {{ log.maidens }} / {{ log.runs_conceded }} / <span class="font-bold text-red-600">{{ log.wickets }}</span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="px-6 py-8 text-center text-sm text-gray-500">No matches logged yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
