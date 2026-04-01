@@ -46,9 +46,33 @@
                             class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50" placeholder="e.g. ALL ROUNDER">
                     </div>
                     <div class="flex flex-col gap-2 md:col-span-2">
-                        <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Image URL</label>
-                        <input type="text" name="image_url" value="{{ player.image_url if player else '' }}" placeholder="https://..." 
-                            class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50">
+                        <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Player Photo</label>
+                        <div class="flex items-center gap-4">
+                            <img id="img-preview" src="{{ player.image_url if player and player.image_url else '' }}" alt="Preview"
+                                class="h-16 w-16 rounded-xl object-cover border border-outline-variant/20 bg-surface-bright {% if not (player and player.image_url) %}hidden{% endif %}">
+                            <div class="flex-1 flex flex-col gap-2">
+                                <select name="image_url" id="image-select" onchange="updatePreview(this.value)"
+                                    class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all">
+                                    <option value="">— No image —</option>
+                                    {% set images = [
+                                        ('suraj.jpg.jpeg',  'Suraj'),
+                                        ('sashank.jpeg',    'Sashank'),
+                                        ('saran.jpeg',      'Saran'),
+                                        ('abhi.jpeg',       'Abhi'),
+                                        ('deepu.jpeg',      'Deepu (KL)'),
+                                        ('sunny.jpeg',      'Sunny'),
+                                        ('pavan.jpeg',      'Pavan'),
+                                        ('prabhas.jpeg',    'Prabhas'),
+                                        ('sailesh.jpeg',    'Sailesh')
+                                    ] %}
+                                    {% for filename, label in images %}
+                                    {% set path = '/static/images/' + filename %}
+                                    <option value="{{ path }}" {% if player and player.image_url == path %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <p class="text-[10px] text-outline ml-1">Select from available player photos</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -193,4 +217,19 @@
     </section>
     {% endif %}
 </div>
+
+{% block scripts %}
+<script>
+function updatePreview(val) {
+    const img = document.getElementById('img-preview');
+    if (val) {
+        img.src = val;
+        img.classList.remove('hidden');
+    } else {
+        img.src = '';
+        img.classList.add('hidden');
+    }
+}
+</script>
 {% endblock %}
+

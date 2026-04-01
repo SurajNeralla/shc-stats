@@ -167,9 +167,11 @@
                 My Stats
             </a>
             {% endif %}
+            {% if session.get('admin_token') %}
             <a href="{{ url_for('dashboard') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'dashboard' %}nav-link-active{% else %}nav-link{% endif %}">
                 Dashboard
             </a>
+            {% endif %}
             <a href="{{ url_for('leaderboard') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'leaderboard' %}nav-link-active{% else %}nav-link{% endif %}">
                 Leaderboard
             </a>
@@ -200,7 +202,7 @@
 
     <footer class="border-t border-outline-variant/20 mt-auto py-6 bg-surface-container-lowest">
         <div class="max-w-7xl mx-auto px-4">
-            <p class="text-center text-[10px] text-on-surface-variant uppercase tracking-[0.2em] font-bold">© 2026 SHC Cricket Statistics</p>
+            <p class="text-center text-[10px] text-on-surface-variant uppercase tracking-[0.2em] font-bold">© Suraj Neralla</p>
         </div>
     </footer>
 
@@ -213,5 +215,7 @@
             });
         }
     </script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>
+

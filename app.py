@@ -37,7 +37,7 @@ def check_auth():
         return redirect(url_for('login'))
 
     if 'admin_token' not in session:
-        player_allowed = ['my_stats', 'dashboard', 'leaderboard', 'index', 'logout']
+        player_allowed = ['my_stats', 'dashboard', 'leaderboard', 'match_history', 'index', 'logout']
         if request.endpoint not in player_allowed:
             return redirect(url_for('dashboard'))
 
