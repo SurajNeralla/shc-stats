@@ -1,0 +1,550 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8 relative w-full space-y-8" id="scorecard-wrapper">
+    <!-- Top Scoreboard Dashboard -->
+    <div class="kinetic-gradient-border p-6 shadow-2xl relative overflow-hidden">
+        <!-- Background Accents -->
+        <div class="absolute -top-20 -right-20 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-secondary/10 rounded-full blur-[100px] pointer-events-none"></div>
+        
+        <div class="relative z-10 flex flex-col items-center justify-center text-center">
+            <!-- Headers -->
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-8 h-1 bg-primary rounded-full animate-pulse"></span>
+                <span class="font-headline font-bold uppercase tracking-[0.2em] text-[10px] text-primary">Live Match Engine</span>
+                <span class="w-8 h-1 bg-primary rounded-full animate-pulse"></span>
+            </div>
+            
+            <p class="mb-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-center">
+                BATTING: <span class="text-on-surface">{{ match.team_a_name if batting_team == 'team_a' else match.team_b_name }}</span>
+            </p>
+
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-12 w-full">
+                <!-- Team A Score -->
+                <div class="flex flex-col items-center">
+                    <div class="text-[10px] uppercase font-bold text-on-surface-variant tracking-widest mb-2">{{ match.team_a_name }}</div>
+                    <div class="text-6xl md:text-8xl font-headline font-black text-on-surface tracking-tighter" id="score-a">
+                        <span id="val-score-a">{{ match.team_a_score }}</span><span class="text-3xl md:text-5xl text-outline-variant" id="wkt-a">/{{ match.team_a_wickets }}</span>
+                    </div>
+                    <div class="mt-2 text-primary font-headline font-bold text-lg" id="overs-a">
+                        <span id="val-overs-a">{{ match.team_a_balls // 6 }}.{{ match.team_a_balls % 6 }}</span><span class="text-xs text-on-surface-variant"> / {{ match.total_overs }} OV</span>
+                    </div>
+                </div>
+
+                <div class="text-2xl font-black text-outline italic px-4 my-2 md:my-0 tracking-widest text-center">VS</div>
+
+                <!-- Team B Score -->
+                <div class="flex flex-col items-center">
+                    <div class="text-[10px] uppercase font-bold text-on-surface-variant tracking-widest mb-2">{{ match.team_b_name }}</div>
+                    <div class="text-6xl md:text-8xl font-headline font-black text-on-surface tracking-tighter" id="score-b">
+                        <span id="val-score-b">{{ match.team_b_score }}</span><span class="text-3xl md:text-5xl text-outline-variant" id="wkt-b">/{{ match.team_b_wickets }}</span>
+                    </div>
+                     <div class="mt-2 text-secondary font-headline font-bold text-lg" id="overs-b">
+                        <span id="val-overs-b">{{ match.team_b_balls // 6 }}.{{ match.team_b_balls % 6 }}</span><span class="text-xs text-on-surface-variant"> / {{ match.total_overs }} OV</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if match.current_innings == 2 %}
+            <div class="mt-8 border border-primary/30 bg-primary/10 px-6 py-2 rounded-full inline-block">
+                <p class="text-sm font-headline font-black tracking-widest text-primary uppercase">TARGET: {{ match.target }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Active Players -->
+    {% set striker = None %}
+    {% set non_striker = None %}
+    {% for p in batting_players %}
+        {% if p.is_striker %}{% set striker = p %}{% endif %}
+        {% if p.is_non_striker %}{% set non_striker = p %}{% endif %}
+    {% endfor %}
+    {% set bowler = None %}
+    {% for p in bowling_players %}
+        {% if p.is_current_bowler %}{% set bowler = p %}{% endif %}
+    {% endfor %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Batting Box -->
+        <div class="bg-surface-container-low rounded-[1.5rem] shadow-xl p-6 border-t border-primary/50 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-[50px] pointer-events-none"></div>
+            
+            <div class="flex items-center gap-3 mb-6 relative z-10">
+                <div class="bg-primary/10 p-2 rounded-lg">
+                    <span class="material-symbols-outlined text-primary">sports_cricket</span>
+                </div>
+                <h3 class="font-headline font-bold text-lg uppercase tracking-wider text-on-surface">At the Crease</h3>
+            </div>
+            
+            <div class="space-y-4 relative z-10">
+                <!-- Striker Row -->
+                <div id="striker-row" class="bg-primary/10 border border-primary/30 p-4 rounded-xl flex justify-between items-center transition-all {% if not striker %}hidden{% endif %}">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span id="striker-name" class="text-lg font-headline font-black text-on-surface uppercase tracking-wide">{{ striker.players.name if striker else '' }}</span>
+                            <span class="text-[8px] font-black text-[#006413] bg-primary px-2 py-0.5 rounded uppercase tracking-widest">STRIKER</span>
+                        </div>
+                        <p class="text-[10px] text-primary mt-1 font-bold uppercase tracking-wider">Batting</p>
+                    </div>
+                    <div class="text-3xl font-headline font-black text-on-surface" id="striker-score">{{ striker.runs_scored if striker else 0 }}<span class="text-sm font-normal text-on-surface-variant font-body ml-1">({{ striker.balls_faced if striker else 0 }})</span></div>
+                </div>
+                {% if match.status != 'completed' %}
+                <button id="select-striker-btn" onclick="openBatterModal('striker')" class="w-full py-4 border-2 border-dashed border-primary/30 hover:border-primary/60 text-primary font-bold text-xs uppercase tracking-widest bg-primary/5 hover:bg-primary/10 rounded-xl transition-all mb-4 {% if striker %}hidden{% endif %}">
+                    + SELECT STRIKER
+                </button>
+                {% endif %}
+
+                <!-- Non-Striker Row -->
+                <div id="nonstriker-row" class="bg-surface-container border border-outline-variant/20 p-4 rounded-xl flex justify-between items-center transition-all {% if not non_striker %}hidden{% endif %}">
+                    <div>
+                        <span id="nonstriker-name" class="text-sm font-headline font-bold text-on-surface-variant uppercase tracking-wide">{{ non_striker.players.name if non_striker else '' }}</span>
+                        <p class="text-[10px] text-outline mt-1 font-bold uppercase tracking-wider">Non-Striker</p>
+                    </div>
+                    <div class="text-2xl font-headline font-black text-on-surface-variant" id="nonstriker-score">{{ non_striker.runs_scored if non_striker else 0 }}<span class="text-xs font-normal text-outline font-body ml-1">({{ non_striker.balls_faced if non_striker else 0 }})</span></div>
+                </div>
+                {% if match.status != 'completed' %}
+                <button id="select-nonstriker-btn" onclick="openBatterModal('non_striker')" class="w-full py-4 border-2 border-dashed border-outline-variant/30 hover:border-outline-variant/60 text-on-surface-variant font-bold text-xs uppercase tracking-widest bg-surface hover:bg-surface-bright rounded-xl transition-all {% if non_striker %}hidden{% endif %}">
+                    + SELECT NON-STRIKER
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Bowling Box -->
+        <div class="bg-surface-container-low rounded-[1.5rem] shadow-xl p-6 border-t border-secondary/50 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-secondary/5 rounded-full blur-[50px] pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 mb-6 relative z-10">
+                <div class="bg-secondary/10 p-2 rounded-lg">
+                    <span class="material-symbols-outlined text-secondary">adjust</span>
+                </div>
+                <h3 class="font-headline font-bold text-lg uppercase tracking-wider text-on-surface">Bowling Attack</h3>
+            </div>
+            
+            <div class="space-y-4 relative z-10 h-full flex flex-col justify-between">
+                <div>
+                    <div id="bowler-row" class="bg-secondary/10 border border-secondary/30 p-5 rounded-xl {% if not bowler %}hidden{% endif %}">
+                        <span id="bowler-name" data-name="{{ bowler.players.name if bowler else '' }}" class="text-xl font-headline font-black text-on-surface uppercase tracking-wide block mb-1">{{ bowler.players.name if bowler else '' }}</span>
+                        <p class="text-[10px] text-secondary font-bold uppercase tracking-wider">Current Bowler</p>
+                        {% if bowler %}
+                        <div class="bowler-stats grid grid-cols-3 gap-2 mt-4">
+                            <div class="bg-surface-lowest p-2 rounded-lg border border-outline-variant/10 text-center"><span class="block text-[8px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">OVERS</span><span class="text-lg font-headline font-black text-on-surface">{{ bowler.balls_bowled // 6 }}.{{ bowler.balls_bowled % 6 }}</span></div>
+                            <div class="bg-surface-lowest p-2 rounded-lg border border-outline-variant/10 text-center"><span class="block text-[8px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">RUNS</span><span class="text-lg font-headline font-black text-on-surface">{{ bowler.runs_conceded }}</span></div>
+                            <div class="bg-surface-lowest p-2 rounded-lg border border-outline-variant/10 text-center"><span class="block text-[8px] text-secondary uppercase font-bold tracking-widest mb-1">WKTS</span><span class="text-lg font-headline font-black text-secondary">{{ bowler.wickets_taken }}</span></div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if match.status != 'completed' %}
+                    <button id="select-bowler-btn" onclick="openModal('bowlerModal')" class="w-full py-5 border-2 border-dashed border-secondary/30 hover:border-secondary/60 text-secondary font-bold text-sm uppercase tracking-widest bg-secondary/5 hover:bg-secondary/10 rounded-xl transition-all shadow-sm {% if bowler %}hidden{% endif %}">
+                        + ASSIGN BOWLER
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    {% if match.status != 'completed' %}
+    <!-- Scoring Engine Controls -->
+    <div id="scoring-panel" class="bg-[#1e002e] border border-tertiary/30 rounded-[1.5rem] p-8 shadow-[0_0_30px_rgba(255,209,112,0.1)] relative overflow-hidden mt-8 transition-all">
+        <div class="absolute inset-0 bg-gradient-to-r from-tertiary/10 to-transparent pointer-events-none"></div>
+
+        <div class="flex justify-center items-center gap-3 mb-8 relative z-10">
+            <span class="w-16 h-[1px] bg-tertiary/50"></span>
+            <h5 class="text-tertiary font-headline font-black text-xl uppercase tracking-[0.3em]">Scoring Terminal</h5>
+            <span class="w-16 h-[1px] bg-tertiary/50"></span>
+        </div>
+        
+        <!-- Runs -->
+        <div class="flex flex-wrap justify-center gap-4 mb-8 relative z-10">
+            <button onclick="postScore('run', {runs: 0})" class="w-16 h-16 rounded-2xl bg-surface border border-outline-variant hover:bg-surface-bright text-on-surface font-headline font-black text-2xl shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 uppercase">0</button>
+            <button onclick="postScore('run', {runs: 1})" class="w-16 h-16 rounded-2xl bg-surface border border-outline-variant hover:bg-surface-bright text-on-surface font-headline font-black text-2xl shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 uppercase">1</button>
+            <button onclick="postScore('run', {runs: 2})" class="w-16 h-16 rounded-2xl bg-surface border border-outline-variant hover:bg-surface-bright text-on-surface font-headline font-black text-2xl shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 uppercase">2</button>
+            <button onclick="postScore('run', {runs: 3})" class="w-16 h-16 rounded-2xl bg-surface border border-outline-variant hover:bg-surface-bright text-on-surface font-headline font-black text-2xl shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 uppercase">3</button>
+            
+            <button onclick="postScore('run', {runs: 4})" class="w-16 h-16 rounded-2xl bg-secondary text-on-secondary font-headline font-black text-2xl shadow-[0_0_20px_rgba(83,160,255,0.4)] transition-transform hover:-translate-y-1 hover:scale-105 active:scale-95 border border-secondary uppercase">4</button>
+            <button onclick="postScore('run', {runs: 6})" class="w-16 h-16 rounded-2xl bg-primary text-[#003d0b] font-headline font-black text-3xl shadow-[0_0_25px_rgba(0,252,65,0.5)] transition-transform hover:-translate-y-1 hover:scale-105 active:scale-95 border border-primary uppercase">6</button>
+        </div>
+        
+        <!-- Extras & Match Controls -->
+        <div class="flex flex-wrap justify-center gap-4 mt-8 relative z-10">
+            <button onclick="postScore('extra', {runs: 0, extra_type: 'wide'})" class="px-6 py-4 rounded-xl bg-tertiary/20 text-tertiary border border-tertiary/50 hover:bg-tertiary/30 font-headline font-bold text-sm tracking-widest shadow transition-all uppercase">WD</button>
+            <button onclick="postScore('extra', {runs: 0, extra_type: 'no-ball'})" class="px-6 py-4 rounded-xl bg-tertiary/20 text-tertiary border border-tertiary/50 hover:bg-tertiary/30 font-headline font-bold text-sm tracking-widest shadow transition-all uppercase">NB</button>
+            
+            <button onclick="handleWicket()" class="px-8 py-4 rounded-xl bg-error text-[#4d0c00] border border-error hover:scale-[1.02] font-headline font-black text-lg tracking-widest shadow-[0_0_20px_rgba(255,115,81,0.5)] transition-all flex justify-center items-center uppercase ml-2">
+                WICKET
+            </button>
+            
+            <div class="w-full h-4 border-b border-tertiary/20 mb-4"></div>
+            
+            <button onclick="undoLastBall()" class="px-6 py-3 rounded-xl bg-surface border border-outline-variant hover:border-tertiary text-on-surface-variant hover:text-tertiary font-headline font-bold text-xs tracking-widest shadow transition-all flex items-center uppercase gap-2">
+                <span class="material-symbols-outlined text-[18px]">undo</span>
+                UNDO LAST
+            </button>
+            <button onclick="endMatch()" class="px-6 py-3 rounded-xl bg-error/10 border border-error/50 hover:bg-error/20 text-error font-headline font-bold text-xs tracking-widest shadow transition-all flex items-center uppercase gap-2 ml-4">
+                <span class="material-symbols-outlined text-[18px]">stop_circle</span>
+                END MATCH
+            </button>
+        </div>
+    </div>
+    {% else %}
+    <!-- Match Completed State -->
+    <div class="bg-surface-container-low p-8 text-center rounded-[1.5rem] mt-8 border border-outline-variant/20 shadow-xl relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent pointer-events-none"></div>
+        <div class="relative z-10">
+            <h4 class="text-3xl font-headline font-black text-primary uppercase tracking-[0.3em] mb-4">Match Concluded</h4>
+            <div class="inline-block px-6 py-3 bg-surface border border-outline-variant/30 rounded-xl shadow-lg">
+                <p class="text-on-surface text-lg font-bold uppercase tracking-widest text-shadow">{{ match.match_result }}</p>
+            </div>
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="{{ url_for('match_history') }}" class="px-6 py-3 bg-surface hover:bg-surface-bright text-on-surface-variant border border-outline-variant rounded-xl font-bold uppercase tracking-widest text-xs transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">arrow_back</span> Return to Archive
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modals -->
+<div id="batterModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center z-[100]">
+    <div class="bg-surface-container border border-outline-variant/30 rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all">
+        <h3 class="text-2xl font-headline font-black text-primary tracking-wider uppercase mb-6 flex items-center gap-3">
+            <span class="material-symbols-outlined">person_add</span> Select Batter
+        </h3>
+        <select id="newBatterSelect" class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-headline font-bold text-lg focus:ring-2 focus:ring-primary/50 transition-all appearance-none cursor-pointer w-full mb-8 uppercase">
+            <option value="" disabled selected>CHOOSE PLAYER...</option>
+            {% for p in batting_players %}
+                <option value="{{ p.player_id }}">{{ p.players.name }}</option>
+            {% endfor %}
+        </select>
+        <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4">
+            <button onclick="closeModal('batterModal')" class="px-6 py-3 border border-outline-variant bg-surface text-on-surface-variant rounded-xl font-headline font-bold text-xs tracking-widest hover:bg-surface-bright uppercase transition-all w-full sm:w-auto">Cancel</button>
+            <button onclick="submitNewBatter()" class="px-6 py-3 bg-primary text-[#003d0b] rounded-xl font-headline font-black text-sm tracking-widest shadow-[0_0_15px_rgba(0,252,65,0.4)] hover:scale-[1.02] active:scale-95 uppercase transition-all w-full sm:w-auto">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<div id="bowlerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center z-[100]">
+    <div class="bg-surface-container border border-outline-variant/30 rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all">
+        <h3 class="text-2xl font-headline font-black text-secondary tracking-wider uppercase mb-6 flex items-center gap-3">
+            <span class="material-symbols-outlined">adjust</span> Select Bowler
+        </h3>
+        <select id="newBowlerSelect" class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-headline font-bold text-lg focus:ring-2 focus:ring-secondary/50 transition-all appearance-none cursor-pointer w-full mb-8 uppercase">
+            <option value="" disabled selected>CHOOSE PLAYER...</option>
+            {% for p in bowling_players %}
+                <option value="{{ p.player_id }}">{{ p.players.name }}</option>
+            {% endfor %}
+        </select>
+        <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4">
+            <button onclick="closeModal('bowlerModal')" class="px-6 py-3 border border-outline-variant bg-surface text-on-surface-variant rounded-xl font-headline font-bold text-xs tracking-widest hover:bg-surface-bright uppercase transition-all w-full sm:w-auto">Cancel</button>
+            <button onclick="submitNewBowler()" class="px-6 py-3 bg-secondary text-[#002042] rounded-xl font-headline font-black text-sm tracking-widest shadow-[0_0_15px_rgba(83,160,255,0.4)] hover:scale-[1.02] active:scale-95 uppercase transition-all w-full sm:w-auto">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="cricket-loader" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[200] flex flex-col items-center justify-center hidden">
+    <div class="relative w-40 h-40 mt-10">
+        <!-- Bat -->
+        <div class="absolute left-20 top-4 w-5 h-24 bg-tertiary border-2 border-[#b45309] rounded-b-[4px] rounded-t origin-top-center animate-bat-swing shadow-[0_0_20px_rgba(255,209,112,0.6)] z-20">
+            <!-- Handle top -->
+            <div class="absolute -top-4 left-1 w-2 h-4 bg-[#b45309] rounded-t-sm"></div>
+            <!-- Handle wrap -->
+            <div class="absolute -top-4 left-0.5 w-[calc(100%-4px)] h-12 bg-surface-highest/80 border-x border-[#b45309]"></div>
+        </div>
+        <!-- Ball -->
+        <div class="absolute left-20 top-20 w-4 h-4 bg-error rounded-full animate-ball-pitch shadow-[0_0_15px_rgba(255,115,81,0.8)] border border-white/20 z-10">
+            <div class="w-[1px] h-full mx-auto bg-black/40 border-x border-[#b92902] opacity-80"></div>
+        </div>
+    </div>
+    <p class="mt-4 font-headline font-black text-tertiary uppercase tracking-[0.4em] text-sm animate-pulse">Processing Ball...</p>
+</div>
+
+<style>
+/* Toast overriden with dark kinetic style */
+.custom-toast {
+    position: fixed; top: 20px; right: 20px; z-index: 9999;
+    padding: 16px 24px; border-radius: 12px;
+    font-family: 'Lexend', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.toast-msg-red { background: rgba(185, 41, 2, 0.9); border: 1px solid rgba(255, 115, 81, 0.3); color: white; }
+.toast-msg-blue { background: rgba(0, 95, 175, 0.9); border: 1px solid rgba(83, 160, 255, 0.3); color: white; }
+.toast-msg-yellow { background: rgba(86, 62, 0, 0.9); border: 1px solid rgba(254, 191, 13, 0.3); color: #ffd170; }
+.toast-msg-green { background: rgba(0, 77, 16, 0.9); border: 1px solid rgba(0, 252, 65, 0.3); color: #9cff93; }
+
+@keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* Cricket Loader Animations */
+@keyframes cricket-swing {
+    0% { transform: rotate(35deg); }
+    15% { transform: rotate(50deg); }
+    30% { transform: rotate(-70deg); }
+    100% { transform: rotate(35deg); }
+}
+@keyframes cricket-pitch {
+    0% { transform: translate(80px, 0) scale(0.8); opacity: 0; }
+    10% { opacity: 1; }
+    30% { transform: translate(-10px, 0) scale(1.1); opacity: 1; } 
+    45% { transform: translate(150px, -120px) scale(0.6); opacity: 0; }
+    100% { opacity: 0; }
+}
+.animate-bat-swing { animation: cricket-swing 1.2s ease-in-out infinite; transform-origin: top center; }
+.animate-ball-pitch { animation: cricket-pitch 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+    const BATTING_TEAM = '{{ batting_team }}';
+    const TOTAL_OVERS = {{ match.total_overs }};
+    const CURRENT_INNINGS = {{ match.current_innings }};
+    
+    function showToast(msg, type='blue') {
+        const toast = document.createElement('div');
+        toast.className = `custom-toast toast-msg-${type}`;
+        toast.innerText = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    async function postScore(type, payload) {
+        payload.type = type;
+        const loader = document.getElementById('cricket-loader');
+        if (loader) loader.classList.remove('hidden');
+        
+        try {
+            let res = await fetch('/api/live-match/{{ match.id }}/score', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            
+            let data = await res.json();
+            if (data.success) {
+                // Confetti for boundaries and wickets with neon colors
+                if (window.confetti && (payload.runs === 4 || payload.runs === 6 || type === 'wicket')) {
+                    let c_colors = type === 'wicket' ? ['#ff7351', '#d53d18', '#b92902'] : ['#00fc40', '#00ec3b', '#a1c6ff'];
+                    confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 }, colors: c_colors, zIndex: 9999 });
+                }
+
+                // Update scoreboard DOM
+                if (data.match) {
+                    let scoreSuffix = BATTING_TEAM === 'team_a' ? 'a' : 'b';
+                    let balls = data.match.balls;
+                    let ovs = Math.floor(balls / 6) + '.' + (balls % 6);
+                    let vsEl = document.getElementById('val-score-' + scoreSuffix);
+                    let wktEl = document.getElementById('wkt-' + scoreSuffix);
+                    let ovsEl = document.getElementById('val-overs-' + scoreSuffix);
+                    if (vsEl) vsEl.textContent = data.match.score;
+                    if (wktEl) wktEl.textContent = '/' + data.match.wickets;
+                    if (ovsEl) ovsEl.textContent = ovs;
+                }
+
+                if (data.striker) {
+                    document.getElementById('striker-score').innerHTML = `${data.striker.runs}<span class="text-sm font-normal text-on-surface-variant font-body ml-1">(${data.striker.balls})</span>`;
+                }
+                if (data.non_striker) {
+                    document.getElementById('nonstriker-score').innerHTML = `${data.non_striker.runs}<span class="text-xs font-normal text-outline font-body ml-1">(${data.non_striker.balls})</span>`;
+                }
+                if (data.bowler) {
+                    let overs = Math.floor(data.bowler.balls / 6) + '.' + (data.bowler.balls % 6);
+                    let bowlerEl = document.getElementById('bowler-name');
+                    bowlerEl.innerHTML = bowlerEl.dataset.name || bowlerEl.innerText.split('\n')[0];
+                    let bowlerRow = document.getElementById('bowler-row');
+                    let existingStats = bowlerRow.querySelector('.bowler-stats');
+                    if (!existingStats) {
+                        existingStats = document.createElement('div');
+                        existingStats.className = 'bowler-stats grid grid-cols-3 gap-2 mt-4';
+                        bowlerRow.appendChild(existingStats);
+                    }
+                    existingStats.innerHTML = `
+                        <div class="bg-surface-lowest p-2 rounded-lg border border-outline-variant/10 text-center"><span class="block text-[8px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">OVERS</span><span class="text-lg font-headline font-black text-on-surface">${overs}</span></div>
+                        <div class="bg-surface-lowest p-2 rounded-lg border border-outline-variant/10 text-center"><span class="block text-[8px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">RUNS</span><span class="text-lg font-headline font-black text-on-surface">${data.bowler.runs}</span></div>
+                        <div class="bg-surface-lowest p-2 rounded-lg border border-outline-variant/10 text-center"><span class="block text-[8px] text-secondary uppercase font-bold tracking-widest mb-1">WKTS</span><span class="text-lg font-headline font-black text-secondary">${data.bowler.wickets}</span></div>`;
+                }
+
+                if (data.striker && data.non_striker) {
+                    if (payload.runs && payload.runs % 2 !== 0) {
+                        let sName = document.getElementById('striker-name').innerText.trim();
+                        let nsName = document.getElementById('nonstriker-name').innerText.trim();
+                        if (sName && nsName) {
+                            document.getElementById('striker-name').innerText = nsName;
+                            document.getElementById('nonstriker-name').innerText = sName;
+                        }
+                    }
+                }
+
+                if (data.innings_over) {
+                    let sp = document.getElementById('scoring-panel');
+                    if (sp) { sp.style.pointerEvents = 'none'; sp.style.opacity = '0.5'; }
+                    
+                    if (data.match_won || CURRENT_INNINGS === 2) {
+                        showToast('MATCH COMPLETED!', 'green');
+                        setTimeout(endMatch, 2000);
+                    } else {
+                        showToast('INNINGS ENDED! SWITCHING IN 3...', 'blue');
+                        setTimeout(switchInnings, 3000);
+                    }
+                    return; // Skip normal end of over logic
+                }
+                
+                if (data.end_of_over) {
+                    showToast('END OF OVER!', 'yellow');
+                    setTimeout(() => { openModal('bowlerModal') }, 1200);
+                }
+            } else {
+                showToast(data.error || 'ERROR', 'red');
+            }
+        } catch (e) {
+            showToast('NETWORK ERROR', 'red');
+        } finally {
+            const loader = document.getElementById('cricket-loader');
+            if (loader) loader.classList.add('hidden');
+        }
+    }
+    
+    let batterRoleTarget = 'striker';
+    function openBatterModal(role) {
+        batterRoleTarget = role;
+        document.getElementById('batterModal').classList.remove('hidden');
+    }
+
+    function handleWicket() {
+        if(confirm("CONFIRM WICKET?")) {
+            postScore('wicket', {}).then(() => {
+                openBatterModal('striker');
+            });
+        }
+    }
+
+    async function submitNewBatter() {
+        let sel = document.getElementById('newBatterSelect');
+        let val = sel.value;
+        let name = sel.options[sel.selectedIndex].text;
+        if (!val) return;
+        
+        let res = await fetch('/api/live-match/{{ match.id }}/score', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: 'swap_batter', new_batter_id: val, role: batterRoleTarget})
+        });
+        if (res.ok) {
+            closeModal('batterModal');
+            if (batterRoleTarget === 'striker') {
+                document.getElementById('striker-name').innerText = name;
+                document.getElementById('striker-row').classList.remove('hidden');
+                document.getElementById('select-striker-btn').classList.add('hidden');
+            } else {
+                document.getElementById('nonstriker-name').innerText = name;
+                document.getElementById('nonstriker-row').classList.remove('hidden');
+                document.getElementById('select-nonstriker-btn').classList.add('hidden');
+            }
+        } else {
+            let errData = await res.json();
+            showToast('ERROR: ' + (errData.error || res.status), 'red');
+        }
+    }
+
+    async function submitNewBowler() {
+        let sel = document.getElementById('newBowlerSelect');
+        let val = sel.value;
+        let name = sel.options[sel.selectedIndex].text;
+        if (!val) return;
+        
+        let old_b_id = "{{ bowler.player_id if bowler else '' }}";
+        let res = await fetch('/api/live-match/{{ match.id }}/score', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: 'swap_bowler', old_bowler_id: old_b_id || null, new_bowler_id: val})
+        });
+        if (res.ok) {
+            closeModal('bowlerModal');
+            let bNameEl = document.getElementById('bowler-name');
+            bNameEl.innerText = name;
+            bNameEl.dataset.name = name; 
+            document.getElementById('bowler-row').classList.remove('hidden');
+            
+            let existingStats = document.getElementById('bowler-row').querySelector('.bowler-stats');
+            if (existingStats) existingStats.remove();
+
+            document.getElementById('select-bowler-btn').classList.add('hidden');
+        } else {
+            let errData = await res.json();
+            showToast('ERROR: ' + (errData.error || res.status), 'red');
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        // Block scoring natively if page loads and innings limits were already surpassed
+        let maxBalls = TOTAL_OVERS * 6;
+        let cBalls = BATTING_TEAM === 'team_a' ? {{ match.team_a_balls }} : {{ match.team_b_balls }};
+        if (cBalls >= maxBalls && '{{ match.status }}' !== 'completed') {
+            let sp = document.getElementById('scoring-panel');
+            if (sp) {
+                sp.style.pointerEvents = 'none';
+                sp.style.opacity = '0.5';
+                if (CURRENT_INNINGS === 1) {
+                    sp.insertAdjacentHTML('beforebegin', '<button onclick="switchInnings()" class="w-full py-5 bg-tertiary text-[#3d2b00] font-headline object-center font-black uppercase tracking-widest text-xl rounded-xl mb-4 shadow-[0_0_20px_rgba(255,209,112,0.4)] animate-pulse hover:scale-[1.01] transition-all">START INNINGS 2</button>');
+                } else {
+                    sp.insertAdjacentHTML('beforebegin', '<button onclick="endMatch()" class="w-full py-5 bg-error text-[#4d0c00] font-headline object-center font-black uppercase tracking-widest text-xl rounded-xl mb-4 shadow-[0_0_20px_rgba(255,115,81,0.4)] animate-pulse hover:scale-[1.01] transition-all">WRAP UP MATCH</button>');
+                }
+            }
+        }
+    });
+
+    function refreshDOM() { window.location.reload(); }
+    
+    async function switchInnings() {
+        showToast("TRANSITIONING...", "blue");
+        let res = await fetch('/api/live-match/{{ match.id }}/switch-innings', { method: 'POST' });
+        if (res.ok) {
+            window.location.href = '/live-match/{{ match.id }}/scorecard';
+        }
+        else showToast("FAILED", "red");
+    }
+
+    async function undoLastBall() {
+        if(!confirm("REVERT LAST ACTION? (Stats roll back instantly)")) return;
+        
+        let res = await fetch('/api/live-match/{{ match.id }}/undo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        
+        if (res.ok) {
+            showToast('ACTION REVERTED', 'green');
+            setTimeout(refreshDOM, 500);
+        } else {
+            let data = await res.json();
+            showToast(data.error || 'ROLLBACK FAILED', 'red');
+        }
+    }
+
+    async function endMatch() {
+        if(!confirm("INITIATE MATCH END PROTOCOL?")) return;
+        
+        let res = await fetch('/api/live-match/{{ match.id }}/end', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        
+        if (res.ok) {
+            let data = await res.json();
+            alert("MATCH TERMINATED.\nRESULT: " + data.result.toUpperCase());
+            window.location.href = '/dashboard';
+        } else {
+            showToast('TERMINATION FAILED', 'red');
+        }
+    }
+</script>
+{% endblock %}

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, jsonify
 from dotenv import load_dotenv
 import os
 
@@ -10,9 +10,10 @@ from models import (
     supabase, get_players, get_player, create_player, update_player, 
     create_player_stats, update_player_stats, get_leaderboard_runs, get_leaderboard_wickets, delete_player,
     get_match_logs, add_match_log, delete_match_log, get_player_by_email,
-    # New Fantasy Features
-    create_premium_match, get_fantasy_leaderboard, get_match_history,
-    get_fantasy_match, update_fantasy_match
+    create_live_match, get_live_match, update_live_match, create_live_match_players,
+    get_live_match_players, update_live_match_player, log_live_ball, sync_player_career_stats,
+    get_all_live_matches, delete_live_match, undo_last_ball, get_completed_matches,
+    recalculate_player_stats
 )
 
 app = Flask(__name__)
@@ -36,7 +37,7 @@ def check_auth():
         return redirect(url_for('login'))
 
     if 'admin_token' not in session:
-        player_allowed = ['my_stats', 'dashboard', 'leaderboard', 'index', 'logout', 'fantasy', 'fantasy_history']
+        player_allowed = ['my_stats', 'dashboard', 'leaderboard', 'index', 'logout']
         if request.endpoint not in player_allowed:
             return redirect(url_for('dashboard'))
 
@@ -90,7 +91,9 @@ def dashboard():
         all_players = [p for p in all_players if search.lower() in p.get('name', '').lower()]
     
     is_admin = 'admin_token' in session
-    return render_template('dashboard.html', players=all_players, search=search, is_admin=is_admin)
+    live_matches = get_all_live_matches() if is_admin else []
+    
+    return render_template('dashboard.html', players=all_players, search=search, is_admin=is_admin, live_matches=live_matches)
 
 @app.route('/players/new', methods=['GET', 'POST'])
 def new_player():
@@ -195,6 +198,11 @@ def leaderboard():
     wickets_leaders = get_leaderboard_wickets()
     return render_template('leaderboard.html', runs_leaders=runs_leaders, wickets_leaders=wickets_leaders)
 
+@app.route('/history')
+def match_history():
+    matches = get_completed_matches()
+    return render_template('match_history.html', matches=matches)
+
 @app.route('/players/<player_id>/delete', methods=['POST'])
 def remove_player(player_id):
     try:
@@ -222,84 +230,384 @@ def my_stats():
     match_logs = get_match_logs(player_id)
     return render_template('my_stats.html', player=player_with_stats, stats=stat, logs=match_logs)
 
-# -----------------------
-# FANTASY STANDALONE ROUTES
-# -----------------------
+# --- LIVE MATCH ROUTES ---
 
-@app.route('/fantasy')
-def fantasy():
-    players = get_fantasy_leaderboard()
-    # we reuse the premium animated leaderboard design for fantasy!
-    return render_template('fantasy.html', players=players)
+@app.route('/live-match/setup')
+def live_match_setup():
+    players = get_players()
+    return render_template('live_match_setup.html', players=players)
 
-@app.route('/fantasy/matches/new', methods=['GET', 'POST'])
-def add_fantasy_match():
-    all_players = get_players()
-    if request.method == 'POST':
-        match_number = int(request.form.get('match_number', 1))
-        player_scores = []
-        for p in all_players:
-            score_str = request.form.get(f"score_{p['id']}")
-            fp_str = request.form.get(f"fantasy_points_{p['id']}")
-            if score_str and score_str.strip() and fp_str and fp_str.strip():
-                player_scores.append({
-                    "player_id": p['id'],
-                    "score": float(score_str),
-                    "fantasy_points": float(fp_str)
-                })
-        
-        if player_scores:
-            try:
-                create_premium_match(match_number, player_scores)
-                flash(f"Fantasy Match #{match_number} securely locked and rankings evaluated!", "success")
-            except Exception as e:
-                flash(f"Error processing match ranking logic: {str(e)}", "error")
-        else:
-            flash("No scores entered! Match was empty and ignored.", "error")
-            
-        return redirect(url_for('fantasy_history'))
-        
-    return render_template('fantasy_match_form.html', players=all_players)
-
-@app.route('/fantasy/matches')
-def fantasy_history():
-    matches = get_match_history()
-    is_admin = 'admin_token' in session
-    return render_template('fantasy_history.html', matches=matches, is_admin=is_admin)
-
-@app.route('/fantasy/matches/<match_id>/edit', methods=['GET', 'POST'])
-def edit_fantasy_match(match_id):
+@app.route('/api/live-match/init', methods=['POST'])
+def init_live_match():
+    # Only admins can init matches
     if 'admin_token' not in session:
-        flash("Only admins can edit fantasy matches.", "error")
-        return redirect(url_for('fantasy_history'))
+        return {"error": "Unauthorized"}, 401
 
-    match = get_fantasy_match(match_id)
+    data = request.json
+    team_a_name = data.get('team_a_name')
+    team_b_name = data.get('team_b_name')
+    team_a_players = data.get('team_a_players', [])
+    team_b_players = data.get('team_b_players', [])
+    total_overs = data.get('total_overs', 20)
+
+    if not (3 <= len(team_a_players) <= 11) or not (3 <= len(team_b_players) <= 11):
+        return {"error": "Both teams must have between 3 and 11 players."}, 400
+
+    match_res = create_live_match({
+        "team_a_name": team_a_name,
+        "team_b_name": team_b_name,
+        "total_overs": total_overs,
+        "status": "setup"
+    })
+    
+    if not match_res.data:
+        return {"error": "Failed to create match."}, 500
+
+    match_id = match_res.data[0]['id']
+
+    # Assign players
+    player_inserts = []
+    for pid in team_a_players:
+        player_inserts.append({"live_match_id": match_id, "player_id": pid, "team": "team_a", "status": "waiting"})
+    for pid in team_b_players:
+        player_inserts.append({"live_match_id": match_id, "player_id": pid, "team": "team_b", "status": "waiting"})
+
+    create_live_match_players(player_inserts)
+
+    return {"match_id": match_id}, 200
+
+@app.route('/live-match/<match_id>/toss')
+def live_match_toss(match_id):
+    match = get_live_match(match_id)
     if not match:
         flash("Match not found.", "error")
-        return redirect(url_for('fantasy_history'))
+        return redirect(url_for('dashboard'))
+    return render_template('live_match_toss.html', match=match)
 
-    if request.method == 'POST':
-        player_scores = []
-        for entry in match['entries']:
-            entry_id = str(entry['id'])
-            score_str = request.form.get(f"score_{entry_id}")
-            fp_str = request.form.get(f"fantasy_points_{entry_id}")
-            player_scores.append({
-                "entry_id": entry['id'],
-                "player_id": entry['player_id'],
-                "score": float(score_str or 0),
-                "fantasy_points": float(fp_str or 0)
-            })
+@app.route('/api/live-match/<match_id>/toss', methods=['POST'])
+def save_toss(match_id):
+    if 'admin_token' not in session:
+        return {"error": "Unauthorized"}, 401
 
-        try:
-            update_fantasy_match(match_id, player_scores)
-            flash(f"Match #{match['match_number']} updated and rankings recalculated!", "success")
-        except Exception as e:
-            flash(f"Error updating match: {str(e)}", "error")
+    data = request.json
+    toss_winner = data.get('toss_winner')
+    toss_decision = data.get('toss_decision')
 
-        return redirect(url_for('fantasy_history'))
+    # Update match
+    update_live_match(match_id, {
+        "toss_winner": toss_winner,
+        "toss_decision": toss_decision,
+        "status": "innings_1",
+        "current_innings": 1
+    })
 
-    return render_template('fantasy_edit_form.html', match=match)
+    return {"success": True}, 200
+
+@app.route('/live-match/<match_id>/scorecard')
+def live_scorecard(match_id):
+    match = get_live_match(match_id)
+    if not match:
+        return redirect(url_for('dashboard'))
+
+    players = get_live_match_players(match_id)
+    team_a = [p for p in players if p['team'] == 'team_a']
+    team_b = [p for p in players if p['team'] == 'team_b']
+
+    # Determine batting and bowling teams based on toss
+    if (match['toss_winner'] == 'team_a' and match['toss_decision'] == 'bat') or (match['toss_winner'] == 'team_b' and match['toss_decision'] == 'bowl'):
+        batting_team = 'team_a' if match['current_innings'] == 1 else 'team_b'
+        bowling_team = 'team_b' if match['current_innings'] == 1 else 'team_a'
+    else:
+        batting_team = 'team_b' if match['current_innings'] == 1 else 'team_a'
+        bowling_team = 'team_a' if match['current_innings'] == 1 else 'team_b'
+
+    batting_players = team_a if batting_team == 'team_a' else team_b
+    bowling_players = team_b if batting_team == 'team_a' else team_a
+    
+    return render_template('live_scorecard.html', match=match, batting_team=batting_team, batting_players=batting_players, bowling_players=bowling_players)
+
+@app.route('/api/debug/live-match/<match_id>/players')
+def debug_players(match_id):
+    players = get_live_match_players(match_id)
+    return jsonify(players)
+
+@app.route('/api/live-match/<match_id>/score', methods=['POST'])
+def update_score(match_id):
+    data = request.json
+    event_type = data.get('type')
+    
+    # swap_batter and swap_bowler are selection events, allow any logged-in user
+    # run/extra/wicket events require admin
+    if event_type not in ('swap_batter', 'swap_bowler') and 'admin_token' not in session:
+        return {"error": "Unauthorized"}, 401
+
+    match = get_live_match(match_id)
+    if not match:
+        return {"error": "Match not found"}, 404
+
+    # data already parsed above
+    # event_type already set above
+    
+    # We will need the players list heavily
+    players = get_live_match_players(match_id)
+    
+    # helper
+    def get_p(pid): return next((p for p in players if p['player_id'] == pid), None)
+    
+    if event_type == 'swap_batter':
+        # New batter comes in
+        new_batter_id = data.get('new_batter_id')
+        role = data.get('role', 'striker')
+        p = get_p(new_batter_id)
+        if p:
+            if role == 'non_striker':
+                update_live_match_player(p['id'], {'status': 'batting', 'is_striker': False, 'is_non_striker': True})
+            else:
+                update_live_match_player(p['id'], {'status': 'batting', 'is_striker': True, 'is_non_striker': False})
+        return {"success": True}, 200
+        
+    if event_type == 'swap_bowler':
+        # End of over: old bowler stops, new bowler starts
+        old_bowler_id = data.get('old_bowler_id')
+        new_bowler_id = data.get('new_bowler_id')
+        
+        ob = get_p(old_bowler_id)
+        if ob: update_live_match_player(ob['id'], {'is_current_bowler': False})
+        
+        nb = get_p(new_bowler_id)
+        if nb: update_live_match_player(nb['id'], {'status': 'bowling', 'is_current_bowler': True})
+        
+        # At end of over, strikers swap
+        striker = next((p for p in players if p['is_striker']), None)
+        non_striker = next((p for p in players if p['is_non_striker']), None)
+        if striker and non_striker:
+            update_live_match_player(striker['id'], {'is_striker': False, 'is_non_striker': True})
+            update_live_match_player(non_striker['id'], {'is_striker': True, 'is_non_striker': False})
+            
+        return {"success": True}, 200
+
+    striker = next((p for p in players if p['is_striker']), None)
+    non_striker = next((p for p in players if p['is_non_striker']), None)
+    bowler = next((p for p in players if p['is_current_bowler']), None)
+
+    team_prefix = 'team_a' if match['current_innings'] == 1 and match['toss_winner'] == 'team_a' and match['toss_decision'] == 'bat' else 'team_b' # Simplified, actually need to just check striker's team
+    if striker:
+        team_prefix = striker['team']
+        
+    score_col = f"{team_prefix}_score"
+    balls_col = f"{team_prefix}_balls"
+    wickets_col = f"{team_prefix}_wickets"
+    
+    current_score = match.get(score_col, 0)
+    current_balls = match.get(balls_col, 0)
+    current_wickets = match.get(wickets_col, 0)
+
+    is_legal_ball = True
+    runs = data.get('runs', 0)
+    
+    if event_type == 'run':
+        # Update striker
+        s_runs = striker['runs_scored'] + runs
+        s_balls = striker['balls_faced'] + 1
+        s_fours = striker['fours'] + (1 if runs == 4 else 0)
+        s_sixes = striker['sixes'] + (1 if runs == 6 else 0)
+        update_live_match_player(striker['id'], {'runs_scored': s_runs, 'balls_faced': s_balls, 'fours': s_fours, 'sixes': s_sixes})
+        
+        # Update bowler
+        b_balls = bowler['balls_bowled'] + 1
+        b_runs = bowler['runs_conceded'] + runs
+        update_live_match_player(bowler['id'], {'balls_bowled': b_balls, 'runs_conceded': b_runs})
+        
+        current_score += runs
+        current_balls += 1
+        
+        log_live_ball(match_id, {
+            'innings': match['current_innings'],
+            'striker_id': striker['player_id'],
+            'non_striker_id': non_striker['player_id'] if non_striker else None,
+            'bowler_id': bowler['player_id'],
+            'runs': runs,
+            'extras': 0,
+            'is_wicket': False
+        })
+        
+        # Sync immediately
+        striker['runs_scored'] = s_runs; striker['balls_faced'] = s_balls; striker['fours'] = s_fours; striker['sixes'] = s_sixes
+        sync_player_career_stats(striker)
+        bowler['balls_bowled'] = b_balls; bowler['runs_conceded'] = b_runs
+        sync_player_career_stats(bowler)
+        
+        # Odd runs swap
+        if runs % 2 != 0 and striker and non_striker:
+            update_live_match_player(striker['id'], {'is_striker': False, 'is_non_striker': True})
+            update_live_match_player(non_striker['id'], {'is_striker': True, 'is_non_striker': False})
+
+    elif event_type == 'extra':
+        extra_type = data.get('extra_type') # wide, no-ball
+        is_legal_ball = False
+        current_score += 1 + runs # 1 for extra + runs off it
+        
+        # Update bowler only runs, no legal ball
+        b_runs = bowler['runs_conceded'] + 1 + runs
+        update_live_match_player(bowler['id'], {'runs_conceded': b_runs})
+        
+        log_live_ball(match_id, {
+            'innings': match['current_innings'],
+            'striker_id': striker['player_id'] if striker else None,
+            'non_striker_id': non_striker['player_id'] if non_striker else None,
+            'bowler_id': bowler['player_id'],
+            'runs': runs,
+            'extras': 1,
+            'extra_type': extra_type,
+            'is_wicket': False
+        })
+        
+        # Update striker only if runs were scored off bat (usually extras are extras, but just in case)
+        if runs > 0 and extra_type == 'no-ball':
+            s_runs = striker['runs_scored'] + runs
+            s_balls = striker['balls_faced'] + 1
+            update_live_match_player(striker['id'], {'runs_scored': s_runs, 'balls_faced': s_balls})
+            striker['runs_scored'] = s_runs; striker['balls_faced'] = s_balls;
+            sync_player_career_stats(striker)
+
+        bowler['runs_conceded'] = b_runs
+        sync_player_career_stats(bowler)
+
+    elif event_type == 'wicket':
+        current_balls += 1
+        current_wickets += 1
+        
+        # Update striker
+        s_balls = striker['balls_faced'] + 1
+        update_live_match_player(striker['id'], {'balls_faced': s_balls, 'status': 'out', 'is_striker': False})
+        
+        # Update bowler
+        b_balls = bowler['balls_bowled'] + 1
+        b_wickets = bowler['wickets_taken'] + 1
+        update_live_match_player(bowler['id'], {'balls_bowled': b_balls, 'wickets_taken': b_wickets})
+        
+        log_live_ball(match_id, {
+            'innings': match['current_innings'],
+            'striker_id': striker['player_id'],
+            'non_striker_id': non_striker['player_id'] if non_striker else None,
+            'bowler_id': bowler['player_id'],
+            'runs': 0,
+            'extras': 0,
+            'is_wicket': True
+        })
+        
+        striker['balls_faced'] = s_balls
+        sync_player_career_stats(striker)
+        bowler['balls_bowled'] = b_balls; bowler['wickets_taken'] = b_wickets;
+        sync_player_career_stats(bowler)
+
+    # Innings end conditions
+    is_innings_over = False
+    match_won = False
+    max_balls = match.get('total_overs', 20) * 6
+    batting_team_count = len([p for p in players if p['team'] == ('team_a' if team_prefix == 'team_a' else 'team_b')])
+    
+    if current_balls >= max_balls:
+        is_innings_over = True
+    if current_wickets >= max(1, batting_team_count - 1):
+        is_innings_over = True
+        
+    if match['current_innings'] == 2:
+        target = match.get('target', 0)
+        if current_score >= target and target > 0:
+            is_innings_over = True
+            match_won = True
+
+    # Update Match
+    update_live_match(match_id, {
+        score_col: current_score,
+        balls_col: current_balls,
+        wickets_col: current_wickets
+    })
+
+    # Reload players after updates to get latest state
+    players_after = get_live_match_players(match_id)
+    striker_after = next((p for p in players_after if p['is_striker']), None)
+    ns_after = next((p for p in players_after if p['is_non_striker']), None)
+    bowler_after = next((p for p in players_after if p['is_current_bowler']), None)
+
+    return {
+        "success": True,
+        "end_of_over": (is_legal_ball and current_balls > 0 and current_balls % 6 == 0),
+        "innings_over": is_innings_over,
+        "match_won": match_won,
+        "striker": {"runs": striker_after['runs_scored'], "balls": striker_after['balls_faced']} if striker_after else None,
+        "non_striker": {"runs": ns_after['runs_scored'], "balls": ns_after['balls_faced']} if ns_after else None,
+        "bowler": {"balls": bowler_after['balls_bowled'], "runs": bowler_after['runs_conceded'], "wickets": bowler_after['wickets_taken']} if bowler_after else None,
+        "match": {"score": current_score, "balls": current_balls, "wickets": current_wickets}
+    }, 200
+
+@app.route('/api/live-match/<match_id>/switch-innings', methods=['POST'])
+def handle_switch_innings(match_id):
+    if 'admin_token' not in session: return {"error": "Unauthorized"}, 401
+    match = get_live_match(match_id)
+    if not match: return {"error": "Match not found"}, 404
+    
+    target = max(match.get('team_a_score', 0), match.get('team_b_score', 0)) + 1
+    update_live_match(match_id, {
+        'current_innings': 2,
+        'target': target,
+        'status': 'innings_2'
+    })
+    
+    # clear live states for next innings
+    players = get_live_match_players(match_id)
+    for p in players:
+        if p['is_striker'] or p['is_non_striker'] or p['is_current_bowler']:
+            update_live_match_player(p['id'], {'is_striker': False, 'is_non_striker': False, 'is_current_bowler': False})
+            
+    return {"success": True}, 200
+
+@app.route('/api/live-match/<match_id>/undo', methods=['POST'])
+def handle_undo_ball(match_id):
+    if 'admin_token' not in session:
+        return {"error": "Unauthorized"}, 401
+    
+    success = undo_last_ball(match_id)
+    if not success:
+        return {"error": "Could not undo last ball (maybe none exists)."}, 400
+    return {"success": True}, 200
+
+@app.route('/api/live-match/<match_id>/delete', methods=['POST'])
+def handle_delete_match(match_id):
+    if 'admin_token' not in session:
+        return {"error": "Unauthorized"}, 401
+    
+    delete_live_match(match_id)
+    flash("Match deleted successfully.", "success")
+    return redirect(url_for('dashboard'))
+
+@app.route('/api/live-match/<match_id>/end', methods=['POST'])
+def handle_end_match(match_id):
+    if 'admin_token' not in session:
+        return {"error": "Unauthorized"}, 401
+    
+    match = get_live_match(match_id)
+    if not match:
+        return {"error": "Match not found"}, 404
+        
+    s_a = match.get('team_a_score', 0)
+    s_b = match.get('team_b_score', 0)
+    result = "Draw"
+    if s_a > s_b: result = f"{match['team_a_name']} won"
+    elif s_b > s_a: result = f"{match['team_b_name']} won"
+    
+    update_live_match(match_id, {'status': 'completed', 'match_result': result})
+    
+    # Recalculate career stats at the end of the match to save loading time during live play
+    try:
+        players = get_live_match_players(match_id)
+        for p in players:
+            recalculate_player_stats(p['player_id'])
+    except Exception as e:
+        print("Error recalculating stats on match end", e)
+        
+    return {"success": True, "result": result}, 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

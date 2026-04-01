@@ -1,27 +1,152 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#0e0e0e">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5345/5345814.png">
-    <title>{% block title %}SkyHigh Cricket Stats{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/motion@11.11.1/dist/motion.js"></script>
+    <title>{% block title %}SHC STATS{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-lowest": "#000000",
+                        "primary-container": "#00fc40",
+                        "on-primary-container": "#005a10",
+                        "primary-dim": "#00ec3b",
+                        "error": "#ff7351",
+                        "on-primary": "#006413",
+                        "tertiary-container": "#febf0d",
+                        "secondary-fixed-dim": "#a1c6ff",
+                        "surface-container-highest": "#262626",
+                        "on-error": "#450900",
+                        "outline-variant": "#484847",
+                        "surface": "#0e0e0e",
+                        "on-background": "#ffffff",
+                        "surface-container-high": "#20201f",
+                        "secondary-dim": "#53a0ff",
+                        "tertiary": "#ffd170",
+                        "on-surface-variant": "#adaaaa",
+                        "secondary": "#53a0ff",
+                        "on-secondary": "#002042",
+                        "surface-container": "#1a1a1a",
+                        "surface-container-low": "#131313",
+                        "primary-fixed": "#00fc40",
+                        "tertiary-fixed": "#febf0d",
+                        "outline": "#767575",
+                        "secondary-container": "#005faf",
+                        "primary": "#9cff93",
+                        "background": "#0e0e0e",
+                        "surface-tint": "#9cff93",
+                        "surface-dim": "#0e0e0e",
+                        "error-container": "#b92902",
+                        "on-surface": "#ffffff",
+                        "surface-bright": "#2c2c2c",
+                        "error-dim": "#d53d18",
+                        "surface-variant": "#262626"
+                    },
+                    fontFamily: {
+                        "headline": ["Lexend"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
     <style>
         body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .kinetic-gradient-border {
+            position: relative;
+            background: #1a1a1a;
+            border-radius: 1.5rem;
+        }
+        .kinetic-gradient-border::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            background: linear-gradient(to right, #00FC41, #1E90FF);
+            border-radius: 1.5rem;
+            z-index: -1;
+            opacity: 0.15;
+        }
+        .kinetic-card {
+            background: #131313;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        input:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(156, 255, 147, 0.2);
+            border-color: #9cff93;
+        }
+        .nav-link-active {
+            color: #00FC41;
+            border-bottom: 2px solid #00FC41;
+        }
+        .nav-link {
+            color: #767575;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav-link:hover {
+            color: #adaaaa;
+            border-color: #484847;
+        }
+        .flash-toast {
+            animation: slideIn 0.4s ease-out, fadeOut 0.4s ease-in 3.6s forwards;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0e0e0e; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #262626; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #484847; 
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #262626 #0e0e0e;
+        }
+
+        /* Hide scrollbar utility */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased font-sans min-h-screen flex flex-col">
+<body class="bg-background text-on-surface font-body antialiased min-h-screen flex flex-col">
     {% set messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-        <div class="fixed top-4 right-4 z-50 space-y-2">
+        <div class="fixed top-20 right-4 z-[60] space-y-2">
         {% for category, message in messages %}
-            <div class="px-6 py-3 rounded shadow-lg text-white font-semibold 
-                {% if category == 'error' %}bg-red-500{% else %}bg-green-500{% endif %}">
+            <div class="flash-toast px-6 py-3 rounded-xl shadow-2xl text-white font-semibold text-sm backdrop-blur-lg border
+                {% if category == 'error' %}bg-error-container/90 border-error/30{% else %}bg-[#004d10]/90 border-primary/30{% endif %}">
                 {{ message }}
             </div>
         {% endfor %}
@@ -29,62 +154,59 @@
     {% endif %}
 
     {% if session.get('admin_token') or session.get('player_id') %}
-    <nav class="bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <span class="text-xl font-bold text-indigo-600">CricketStats</span>
-                    </div>
-                    <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
-                        {% if session.get('player_id') %}
-                        <a href="{{ url_for('my_stats') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {% if request.endpoint == 'my_stats' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
-                            My Stats
-                        </a>
-                        {% endif %}
-                        <a href="{{ url_for('dashboard') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {% if request.endpoint == 'dashboard' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
-                            Dashboard
-                        </a>
-                        <a href="{{ url_for('leaderboard') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {% if request.endpoint == 'leaderboard' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
-                            Leaderboard
-                        </a>
-                        <a href="{{ url_for('fantasy') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium text-emerald-600 hover:text-emerald-800">
-                            Fantasy Engine ✨
-                        </a>
-                        {% if session.get('admin_token') %}
-                        <a href="{{ url_for('new_player') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {% if request.endpoint == 'new_player' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
-                            Add Player
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <a href="{{ url_for('logout') }}" class="text-sm font-medium text-gray-500 hover:text-red-600 transition duration-150">Logout</a>
-                </div>
-            </div>
+    <header class="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-xl flex justify-between items-center px-6 h-16 shadow-[0px_20px_40px_rgba(0,0,0,0.6)]">
+        <div class="flex items-center gap-4">
+            <h1 class="text-xl font-black italic text-[#00FC41] tracking-widest font-headline">SHC STATS</h1>
         </div>
-    </nav>
+        <div class="hidden sm:flex items-center gap-1">
+            {% if session.get('player_id') %}
+            <a href="{{ url_for('my_stats') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'my_stats' %}nav-link-active{% else %}nav-link{% endif %}">
+                My Stats
+            </a>
+            {% endif %}
+            <a href="{{ url_for('dashboard') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'dashboard' %}nav-link-active{% else %}nav-link{% endif %}">
+                Dashboard
+            </a>
+            <a href="{{ url_for('leaderboard') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'leaderboard' %}nav-link-active{% else %}nav-link{% endif %}">
+                Leaderboard
+            </a>
+            <a href="{{ url_for('match_history') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'match_history' %}nav-link-active{% else %}nav-link{% endif %}">
+                History
+            </a>
+            {% if session.get('admin_token') %}
+            <a href="{{ url_for('new_player') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'new_player' %}nav-link-active{% else %}nav-link{% endif %}">
+                Add Player
+            </a>
+            <a href="{{ url_for('live_match_setup') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'live_match_setup' %}text-[#ff7351] border-b-2 border-[#ff7351]{% else %}nav-link{% endif %}">
+                <span class="material-symbols-outlined text-sm align-middle mr-0.5" style="font-size:16px">sports_cricket</span>
+                Live Match
+            </a>
+            {% endif %}
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{{ url_for('logout') }}" class="text-xs font-bold text-outline hover:text-error uppercase tracking-wider transition duration-200 px-3 py-2 rounded-lg hover:bg-surface-bright">
+                Logout
+            </a>
+        </div>
+    </header>
     {% endif %}
 
-    <main class="flex-grow flex flex-col">
+    <main class="flex-grow flex flex-col pt-20">
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-white border-t border-gray-200 mt-auto py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-sm text-gray-500">&copy; 2026 Cricket Statistics Management System.</p>
+    <footer class="border-t border-outline-variant/20 mt-auto py-6 bg-surface-container-lowest">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="text-center text-[10px] text-on-surface-variant uppercase tracking-[0.2em] font-bold">© 2026 SHC Cricket Statistics</p>
         </div>
     </footer>
+
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('ServiceWorker registration successful');
-                })
-                .catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
+                .then(registration => { console.log('SW OK'); })
+                .catch(err => { console.log('SW fail: ', err); });
             });
         }
     </script>

@@ -1,208 +1,196 @@
 {% extends "base.html" %}
-{% block title %}{% if player %}Edit {{ player.name }}{% else %}Add Player{% endif %}{% endblock %}
+{% block title %}{% if player %}Edit {{ player.name }}{% else %}Add Player{% endif %} — SHC STATS{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full block">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <!-- Page Title -->
+    <div class="mb-8">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="w-8 h-1 bg-primary rounded-full"></span>
+            <span class="font-headline font-bold uppercase tracking-[0.2em] text-xs text-primary">Data Entry</span>
+        </div>
+        <h2 class="text-4xl font-headline font-black tracking-tight text-on-surface">
+            {% if player %}EDIT PLAYER PROFILE{% else %}NEW PLAYER PROFILE{% endif %}
+        </h2>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        
         <!-- Player Form -->
-        <div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6 h-max">
-            <div>
-                <h3 class="text-lg leading-6 font-medium text-gray-900">
-                    {% if player %}Edit Player Profile{% else %}New Player Profile{% endif %}
-                </h3>
+        <section class="kinetic-gradient-border p-6 shadow-2xl h-max">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="bg-secondary/10 p-2 rounded-lg">
+                    <span class="material-symbols-outlined text-secondary">person</span>
+                </div>
+                <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Basic Info</h3>
             </div>
-            <form method="POST" class="mt-5 space-y-4">
-                <div class="grid grid-cols-6 gap-6">
-                    <div class="col-span-6 sm:col-span-3">
-                        <label class="block text-sm font-medium text-gray-700">Full Name</label>
-                        <input type="text" name="name" value="{{ player.name if player else '' }}" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+            <form method="POST" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Full Name</label>
+                        <input type="text" name="name" value="{{ player.name if player else '' }}" required 
+                            class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50" placeholder="e.g. VIRAT KOHLI">
                     </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label class="block text-sm font-medium text-gray-700">Age</label>
-                        <input type="number" name="age" value="{{ player.age if player else '' }}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Age</label>
+                        <input type="number" name="age" value="{{ player.age if player else '' }}" 
+                            class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all" placeholder="00">
                     </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label class="block text-sm font-medium text-gray-700">Team</label>
-                        <input type="text" name="team" value="{{ player.team if player else '' }}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Team</label>
+                        <input type="text" name="team" value="{{ player.team if player else '' }}" 
+                            class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50" placeholder="e.g. SHC TITANS">
                     </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <label class="block text-sm font-medium text-gray-700">Role</label>
-                        <input type="text" name="role" value="{{ player.role if player else '' }}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Role</label>
+                        <input type="text" name="role" value="{{ player.role if player else '' }}" 
+                            class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50" placeholder="e.g. ALL ROUNDER">
                     </div>
-                    <div class="col-span-6">
-                        <label class="block text-sm font-medium text-gray-700">Image URL</label>
-                        <input type="text" name="image_url" value="{{ player.image_url if player else '' }}" placeholder="/static/images/photo.jpeg or https://..." class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
-                    </div>
-                </div>
-
-                <div class="mt-6 border-t border-gray-200 pt-6">
-                    <h4 class="text-sm font-medium text-gray-900">Player Portal Access</h4>
-                    <div class="grid grid-cols-6 gap-6 mt-4">
-                        <div class="col-span-6 sm:col-span-3">
-                            <label class="block text-sm font-medium text-gray-700">Login Email</label>
-                            <input type="email" name="email" value="{{ player.email if player else '' }}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
-                        </div>
-                        <div class="col-span-6 sm:col-span-3">
-                            <label class="block text-sm font-medium text-gray-700">Set Password</label>
-                            <input type="password" name="password" placeholder="Leave blank to keep current" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
-                        </div>
+                    <div class="flex flex-col gap-2 md:col-span-2">
+                        <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Image URL</label>
+                        <input type="text" name="image_url" value="{{ player.image_url if player else '' }}" placeholder="https://..." 
+                            class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50">
                     </div>
                 </div>
 
-                <div class="flex justify-end pt-4">
-                    <button type="submit" class="bg-indigo-600 border border-transparent rounded-md shadow-sm py-2 px-4 inline-flex justify-center text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full mb-4">
-                        Save Profile
-                    </button>
-                    <a href="{{ url_for('dashboard') }}" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm sm:hidden ml-2">
-                        Cancel
-                    </a>
+                <!-- Portal Access -->
+                <div class="border-t border-outline-variant/20 pt-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="bg-tertiary/10 p-2 rounded-lg">
+                            <span class="material-symbols-outlined text-tertiary">lock</span>
+                        </div>
+                        <h4 class="font-headline font-bold text-sm uppercase tracking-wider">Portal Access</h4>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Login Email</label>
+                            <input type="email" name="email" value="{{ player.email if player else '' }}" 
+                                class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50" placeholder="player@email.com">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Password</label>
+                            <input type="password" name="password" placeholder="Leave blank to keep" 
+                                class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50">
+                        </div>
+                    </div>
                 </div>
+
+                <button type="submit" class="w-full bg-primary text-on-primary font-headline font-black py-4 rounded-2xl text-lg uppercase tracking-widest shadow-[0_10px_30px_rgba(0,252,65,0.3)] hover:scale-[1.02] active:scale-95 transition-all">
+                    SAVE PLAYER PROFILE
+                </button>
             </form>
-        </div>
-        
-        <!-- Player Stats -->
+        </section>
+
+        <!-- Career Stats -->
         {% if player %}
-        <div class="bg-gray-50 shadow px-4 py-5 sm:rounded-lg sm:p-6 border border-gray-200 h-max">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 border-b border-gray-200 pb-2 mb-4">Career Statistics</h3>
-            
-            <div class="grid grid-cols-2 lg:grid-cols-3 gap-6 text-center">
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Matches</div>
-                    <div class="text-2xl font-black text-gray-900">{{ stats.matches | default(0) }}</div>
+        <section class="bg-surface-container-low p-6 rounded-[1.5rem] shadow-xl h-max">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="bg-primary/10 p-2 rounded-lg">
+                    <span class="material-symbols-outlined text-primary">sports_cricket</span>
                 </div>
-                <!-- Batting -->
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Runs</div>
-                    <div class="text-2xl font-black text-indigo-600">{{ stats.runs | default(0) }}</div>
+                <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Career Stats</h3>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                {% set stat_items = [
+                    ('Matches', stats.matches|default(0), 'primary'),
+                    ('Runs', stats.runs|default(0), 'primary'),
+                    ('Highest', stats.highest_score|default(0), 'on-surface'),
+                    ('100 / 50', (stats.hundreds|default(0))|string + ' / ' + (stats.fifties|default(0))|string, 'on-surface'),
+                    ('4s / 6s', (stats.fours|default(0))|string + ' / ' + (stats.sixes|default(0))|string, 'on-surface'),
+                    ('Wickets', stats.wickets|default(0), 'secondary'),
+                    ('Overs', stats.overs_bowled|default(0), 'on-surface'),
+                    ('Catches', stats.catches|default(0), 'tertiary'),
+                    ('Stumpings', stats.stumpings|default(0), 'tertiary')
+                ] %}
+                {% for label, value, color in stat_items %}
+                <div class="bg-surface-container p-4 rounded-2xl text-center border border-outline-variant/10">
+                    <div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-[0.15em] mb-1">{{ label }}</div>
+                    <div class="text-2xl font-headline font-black text-{{ color }}">{{ value }}</div>
                 </div>
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Highest Score</div>
-                    <div class="text-2xl font-black text-gray-900">{{ stats.highest_score | default(0) }}</div>
-                </div>
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Avg</div>
-                    <div class="text-2xl font-black text-gray-900">
-                        {% if stats.matches %}
-                        {{ "%.1f"|format(stats.runs / stats.matches) }}
-                        {% else %}0.0{% endif %}
-                    </div>
-                </div>
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">SR</div>
-                    <div class="text-2xl font-black text-gray-900">
-                        {% if stats.balls_faced %}
-                        {{ "%.1f"|format((stats.runs / stats.balls_faced) * 100) }}
-                        {% else %}0.0{% endif %}
-                    </div>
-                </div>
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">100 / 50</div>
-                    <div class="text-2xl font-black text-gray-900">{{ stats.hundreds | default(0) }} / {{ stats.fifties | default(0) }}</div>
-                </div>
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">4s / 6s</div>
-                    <div class="text-2xl font-black text-gray-900">{{ stats.fours | default(0) }} / {{ stats.sixes | default(0) }}</div>
-                </div>
+                {% endfor %}
                 
-                <!-- Bowling -->
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Wickets</div>
-                    <div class="text-2xl font-black text-indigo-600">{{ stats.wickets | default(0) }}</div>
-                </div>
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Overs</div>
-                    <div class="text-2xl font-black text-gray-900">{{ stats.overs_bowled | default(0.0) }}</div>
-                </div>
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Econ</div>
-                    <div class="text-2xl font-black text-gray-900">
-                        {% if stats.overs_bowled %}
-                        {{ "%.2f"|format(stats.runs_conceded / stats.overs_bowled) }}
-                        {% else %}0.00{% endif %}
+                <!-- Computed stats -->
+                <div class="bg-surface-container p-4 rounded-2xl text-center border border-outline-variant/10">
+                    <div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-[0.15em] mb-1">Avg</div>
+                    <div class="text-2xl font-headline font-black text-on-surface">
+                        {% if stats.matches %}{{ "%.1f"|format(stats.runs / stats.matches) }}{% else %}0.0{% endif %}
                     </div>
                 </div>
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Maidens</div>
-                    <div class="text-2xl font-black text-gray-900">{{ stats.maidens | default(0) }}</div>
-                </div>
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Bowling Avg</div>
-                    <div class="text-2xl font-black text-gray-900">
-                        {% if stats.wickets %}
-                        {{ "%.1f"|format(stats.runs_conceded / stats.wickets) }}
-                        {% else %}0.0{% endif %}
+                <div class="bg-surface-container p-4 rounded-2xl text-center border border-outline-variant/10">
+                    <div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-[0.15em] mb-1">SR</div>
+                    <div class="text-2xl font-headline font-black text-on-surface">
+                        {% if stats.balls_faced %}{{ "%.1f"|format((stats.runs / stats.balls_faced) * 100) }}{% else %}0.0{% endif %}
                     </div>
                 </div>
-                
-                <!-- Fielding -->
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Catches</div>
-                    <div class="text-2xl font-black text-gray-900">{{ stats.catches | default(0) }}</div>
-                </div>
-                <div class="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider">Stumpings</div>
-                    <div class="text-2xl font-black text-gray-900">{{ stats.stumpings | default(0) }}</div>
+                <div class="bg-surface-container p-4 rounded-2xl text-center border border-outline-variant/10">
+                    <div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-[0.15em] mb-1">Econ</div>
+                    <div class="text-2xl font-headline font-black text-secondary">
+                        {% if stats.overs_bowled %}{{ "%.2f"|format(stats.runs_conceded / stats.overs_bowled) }}{% else %}0.00{% endif %}
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
         {% endif %}
     </div>
 
-    <!-- Match Logs -->
+    <!-- Match Log -->
     {% if player %}
-    <div class="mt-8 bg-white shadow sm:rounded-lg overflow-hidden border border-gray-200">
-        <div class="px-4 py-5 sm:px-6 flex justify-between items-center border-b border-gray-200 bg-gray-50">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Match Log</h3>
-            <a href="{{ url_for('add_match', player_id=player.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-                Log New Match Option
+    <section class="mt-10 bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden">
+        <div class="px-6 py-5 flex justify-between items-center border-b border-outline-variant/20">
+            <div class="flex items-center gap-3">
+                <div class="bg-tertiary/10 p-2 rounded-lg">
+                    <span class="material-symbols-outlined text-tertiary">history</span>
+                </div>
+                <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Match Log</h3>
+            </div>
+            <a href="{{ url_for('add_match', player_id=player.id) }}" class="px-5 py-2.5 bg-primary/20 text-primary font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-primary/30 transition-all border border-primary/30">
+                + Log Match
             </a>
         </div>
-        
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-white text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    <tr>
-                        <th class="px-6 py-3 text-left">Date / Opponent</th>
-                        <th class="px-6 py-3 text-left">Batting (R/B/4s/6s)</th>
-                        <th class="px-6 py-3 text-left">Bowling (O/M/R/W)</th>
-                        <th class="px-6 py-3 text-right">Actions</th>
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b border-outline-variant/20">
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Date / Opponent</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Batting (R/B/4s/6s)</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Bowling (O/M/R/W)</th>
+                        <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody>
                     {% for log in logs %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div class="font-bold">{{ log.match_date }}</div>
-                            <div class="text-gray-500">vs {{ log.opponent }}</div>
+                    <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="font-headline font-bold text-on-surface">{{ log.match_date }}</div>
+                            <div class="text-on-surface-variant text-xs">vs {{ log.opponent }}</div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            <span class="font-bold border px-2 py-0.5 rounded bg-gray-50">{{ log.runs }}</span> / 
-                            <span class="text-gray-500">{{ log.balls_faced }}</span> / 
-                            <span class="text-green-600">{{ log.fours }}x4</span> / 
-                            <span class="text-blue-600">{{ log.sixes }}x6</span>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">
+                            <span class="font-headline font-black text-primary px-2 py-0.5 rounded bg-primary/10">{{ log.runs }}</span> / 
+                            <span>{{ log.balls_faced }}</span> / 
+                            <span class="text-tertiary">{{ log.fours }}x4</span> / 
+                            <span class="text-secondary">{{ log.sixes }}x6</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            {{ log.overs_bowled }} / {{ log.maidens }} / {{ log.runs_conceded }} / <span class="font-bold text-red-600">{{ log.wickets }}</span>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">
+                            {{ log.overs_bowled }} / {{ log.maidens }} / {{ log.runs_conceded }} / <span class="font-bold text-error">{{ log.wickets }}W</span>
                             {% if log.wides or log.no_balls %}
-                                <div class="text-xs text-gray-400 mt-1">(Wd: {{ log.wides }}, NB: {{ log.no_balls }})</div>
+                            <div class="text-xs text-outline mt-1">(Wd: {{ log.wides }}, NB: {{ log.no_balls }})</div>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <form action="{{ url_for('remove_match', player_id=player.id, log_id=log.id) }}" method="POST" onsubmit="return confirm('Delete this match log entirely?');">
-                                <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <form action="{{ url_for('remove_match', player_id=player.id, log_id=log.id) }}" method="POST" onsubmit="return confirm('Delete this match?');">
+                                <button type="submit" class="text-error hover:text-error-dim font-bold text-xs uppercase tracking-wider transition-colors">Delete</button>
                             </form>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500">No matches logged yet.</td>
+                        <td colspan="4" class="px-6 py-12 text-center text-sm text-on-surface-variant">No matches logged yet.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
     {% endif %}
 </div>
 {% endblock %}

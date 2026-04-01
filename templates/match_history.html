@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Match History — SHC STATS{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <!-- Page Title -->
+    <div class="mb-8 text-center sm:text-left">
+        <div class="flex items-center justify-center sm:justify-start gap-2 mb-1">
+            <span class="w-8 h-1 bg-tertiary rounded-full"></span>
+            <span class="font-headline font-bold uppercase tracking-[0.2em] text-[10px] text-tertiary">Match Archive</span>
+        </div>
+        <h2 class="text-4xl font-headline font-black tracking-tight text-on-surface uppercase">COMPLETED MATCHES</h2>
+    </div>
+
+    <!-- Match List -->
+    {% if matches %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for m in matches %}
+        <div class="kinetic-gradient-border p-6 shadow-2xl relative overflow-hidden group hover:-translate-y-1 transition-transform">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-[50px] pointer-events-none group-hover:bg-primary/20 transition-colors duration-500"></div>
+            
+            <div class="relative z-10">
+                <!-- Header -->
+                <div class="flex justify-between items-start mb-6 border-b border-outline-variant/20 pb-4">
+                    <div>
+                        <span class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest"><span class="material-symbols-outlined text-[10px] align-middle mr-1 text-tertiary">history</span>{{ m.created_at[:10] }}</span>
+                        <h3 class="font-headline font-black text-xl text-on-surface mt-1 uppercase">{{ m.team_a_name }} <span class="text-outline text-sm italic mx-1">vs</span> {{ m.team_b_name }}</h3>
+                    </div>
+                </div>
+                
+                <!-- Scores -->
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-secondary font-bold uppercase tracking-widest">{{ m.team_a_name }}</span>
+                        <div class="font-headline font-black text-3xl text-on-surface">
+                            {{ m.team_a_score }}<span class="text-xl text-outline-variant">/{{ m.team_a_wickets }}</span>
+                        </div>
+                        <span class="text-xs text-on-surface-variant font-bold mt-1">{{ m.team_a_balls // 6 }}.{{ m.team_a_balls % 6 }} Overs</span>
+                    </div>
+
+                    <div class="text-center font-black text-outline italic px-2">VS</div>
+
+                    <div class="flex flex-col text-right">
+                        <span class="text-[10px] text-error font-bold uppercase tracking-widest">{{ m.team_b_name }}</span>
+                        <div class="font-headline font-black text-3xl text-on-surface">
+                            {{ m.team_b_score }}<span class="text-xl text-outline-variant">/{{ m.team_b_wickets }}</span>
+                        </div>
+                        <span class="text-xs text-on-surface-variant font-bold mt-1">{{ m.team_b_balls // 6 }}.{{ m.team_b_balls % 6 }} Overs</span>
+                    </div>
+                </div>
+
+                <!-- Footer / Result -->
+                <div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/10 flex justify-between items-center">
+                    <p class="font-headline font-black text-sm uppercase tracking-wider text-primary">{{ m.match_result }}</p>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ url_for('live_scorecard', match_id=m.id) }}" class="px-4 py-2 border border-secondary/30 bg-secondary/10 hover:bg-secondary/20 text-secondary font-bold text-[10px] uppercase tracking-widest rounded-lg transition-all z-20 relative">
+                            Scorecard
+                        </a>
+                        {% if session.get('admin_token') %}
+                        <form action="/api/live-match/{{ m.id }}/delete" method="POST" onsubmit="return confirm('Delete this completed match? Career stats will be permanently rolled back.');" class="inline z-20 relative">
+                            <button type="submit" class="px-3 py-2 border border-error/30 bg-error/10 hover:bg-error/20 text-error font-bold rounded-lg transition-all flex items-center justify-center">
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-surface-container-low p-12 rounded-[1.5rem] border border-outline-variant/10 text-center shadow-xl">
+        <span class="material-symbols-outlined text-outline text-6xl mb-4">history_toggle_off</span>
+        <h3 class="font-headline font-black text-2xl text-on-surface uppercase mb-2">No Matches Found</h3>
+        <p class="text-on-surface-variant text-sm font-medium">Completed lives matches will appear in this archive.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

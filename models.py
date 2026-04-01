@@ -18,8 +18,6 @@ def get_player(player_id):
 def create_player(data):
     if "total_score" not in data:
         data["total_score"] = 0
-    if "total_fantasy_points" not in data:
-        data["total_fantasy_points"] = 0
     return supabase.table("players").insert(data).execute()
 
 def update_player(player_id, data):
@@ -137,114 +135,160 @@ def get_leaderboard_wickets():
     res = supabase.table("player_stats").select("*, players(*)").order("wickets", desc=True).limit(10).execute()
     return res.data
 
-# --- FANTASY RANK/POINTS ENGINE ---
-def create_premium_match(match_number, player_scores_list):
-    player_scores_list.sort(key=lambda x: (x['score'], x['fantasy_points']), reverse=True)
+# --- LIVE MATCH MODULE ---
+
+def create_live_match(data):
+    return supabase.table("live_matches").insert(data).execute()
+
+def get_live_match(match_id):
+    res = supabase.table("live_matches").select("*").eq("id", match_id).execute()
+    return res.data[0] if res.data else None
+
+def update_live_match(match_id, data):
+    return supabase.table("live_matches").update(data).eq("id", match_id).execute()
+
+def create_live_match_players(data_list):
+    return supabase.table("live_match_players").insert(data_list).execute()
+
+def get_live_match_players(match_id):
+    return supabase.table("live_match_players").select("*, players(*)").eq("live_match_id", match_id).execute().data
+
+def update_live_match_player(lmp_id, data):
+    return supabase.table("live_match_players").update(data).eq("id", lmp_id).execute()
+
+def log_live_ball(match_id, ball_data):
+    # Log the exact ball event
+    ball_data["live_match_id"] = match_id
+    supabase.table("live_match_balls").insert(ball_data).execute()
     
-    for i in range(len(player_scores_list)):
-        if i > 0:
-            prev = player_scores_list[i-1]
-            curr = player_scores_list[i]
-            if curr['score'] == prev['score'] and curr['fantasy_points'] == prev['fantasy_points']:
-                curr['rank'] = prev['rank']
-            else:
-                curr['rank'] = i + 1
-        else:
-            player_scores_list[i]['rank'] = 1
+    # After a ball is logged, the caller handles updating live_match_players and live_matches
+    # Then we run live sync by updating the global match_logs and recalculating player stats
+    
+def sync_player_career_stats(lmp_record):
+    """
+    Takes a single live_match_player record, updates (or creates) its 
+    corresponding match_logs entry, and triggers global recalculate.
+    """
+    if not lmp_record.get('match_log_id'):
+        # Create initial dummy match log
+        log_data = {
+            'player_id': lmp_record['player_id'],
+            'opponent': 'Live Match',
+            'runs': 0, 'balls_faced': 0, 'fours': 0, 'sixes': 0,
+            'overs_bowled': 0, 'maidens': 0, 'runs_conceded': 0, 'wickets': 0, 'no_balls': 0, 'wides': 0
+        }
+        res = supabase.table("match_logs").insert(log_data).execute()
+        if res.data:
+            match_log_id = res.data[0]['id']
+            update_live_match_player(lmp_record['id'], {'match_log_id': match_log_id})
+            lmp_record['match_log_id'] = match_log_id
             
-    match_resp = supabase.table("matches").insert({
-        "match_number": match_number,
-        "locked": True
-    }).execute()
+    # Calculate overs properly
+    balls = lmp_record.get('balls_bowled', 0)
+    overs_b = (balls // 6) + ((balls % 6) / 10.0)
+
+    sync_data = {
+        'runs': lmp_record.get('runs_scored', 0),
+        'balls_faced': lmp_record.get('balls_faced', 0),
+        'fours': lmp_record.get('fours', 0),
+        'sixes': lmp_record.get('sixes', 0),
+        'overs_bowled': overs_b,
+        'maidens': lmp_record.get('maidens', 0),
+        'runs_conceded': lmp_record.get('runs_conceded', 0),
+        'wickets': lmp_record.get('wickets_taken', 0),
+        # Wides and No-balls per bowler aren't strictly tracked in the live_match_players table yet, 
+        # but could be added if needed, right now we just push standard stats.
+    }
+    supabase.table("match_logs").update(sync_data).eq("id", lmp_record['match_log_id']).execute()
+    # defer recalculate_player_stats to end of match to save time
+
+def get_all_live_matches():
+    return supabase.table("live_matches").select("*").in_("status", ["setup", "innings_1", "innings_2"]).order("created_at", desc=True).execute().data
+
+def get_completed_matches():
+    return supabase.table("live_matches").select("*").eq("status", "completed").order("created_at", desc=True).execute().data
     
-    match_id = match_resp.data[0]['id']
+def delete_live_match(match_id):
+    players = get_live_match_players(match_id)
+    for p in players:
+        if p.get('match_log_id'):
+            supabase.table("match_logs").delete().eq("id", p['match_log_id']).execute()
+            recalculate_player_stats(p['player_id'])
+    return supabase.table("live_matches").delete().eq("id", match_id).execute()
+
+def undo_last_ball(match_id):
+    res = supabase.table("live_match_balls").select("*").eq("live_match_id", match_id).order("created_at", desc=True).limit(1).execute()
+    if not res.data: return False
     
-    entries_to_insert = []
-    for p in player_scores_list:
-        entries_to_insert.append({
-            "match_id": match_id,
-            "player_id": p['player_id'],
-            "score": p['score'],
-            "fantasy_points": p['fantasy_points'],
-            "rank": p['rank']
-        })
-    supabase.table("entries").insert(entries_to_insert).execute()
+    ball = res.data[0]
+    supabase.table("live_match_balls").delete().eq("id", ball['id']).execute()
     
-    players_resp = supabase.table("players").select("id, total_score, total_fantasy_points").execute().data
-    player_data = {p['id']: p for p in players_resp}
+    match = get_live_match(match_id)
+    players = get_live_match_players(match_id)
     
-    for p in player_scores_list:
-        pt = player_data.get(p['player_id'], {})
-        new_score = (pt.get('total_score') or 0) + p['score']
-        new_fp = (pt.get('total_fantasy_points') or 0) + p['fantasy_points']
-        supabase.table("players").update({
-            "total_score": new_score,
-            "total_fantasy_points": new_fp
-        }).eq("id", p['player_id']).execute()
-
-def get_match_history():
-    data = supabase.table("matches").select("id, match_number, created_at, locked, entries(id, score, fantasy_points, rank, players(id, name, image_url))").order("match_number", desc=True).execute().data
-    for m in data:
-        m['entries'].sort(key=lambda x: x['rank'])
-    return data
-
-def get_fantasy_leaderboard():
-    return supabase.table("players").select("*").order("total_score", desc=True).order("total_fantasy_points", desc=True).execute().data
-
-def get_fantasy_match(match_id):
-    """Fetch a single match with all its entries and player details."""
-    res = supabase.table("matches").select(
-        "id, match_number, entries(id, score, fantasy_points, rank, player_id, players(id, name, image_url, total_score, total_fantasy_points))"
-    ).eq("id", match_id).execute()
-    if res.data:
-        match = res.data[0]
-        match['entries'].sort(key=lambda x: x['rank'])
-        return match
-    return None
-
-def recalculate_all_player_totals():
-    """Rebuild total_score and total_fantasy_points for every player from scratch."""
-    all_entries = supabase.table("entries").select("player_id, score, fantasy_points").execute().data
-    totals = {}
-    for e in all_entries:
-        pid = e['player_id']
-        if pid not in totals:
-            totals[pid] = {'total_score': 0.0, 'total_fantasy_points': 0.0}
-        totals[pid]['total_score'] += float(e.get('score') or 0)
-        totals[pid]['total_fantasy_points'] += float(e.get('fantasy_points') or 0)
-
-    # Zero-out players with no entries at all
-    all_players = supabase.table("players").select("id").execute().data
-    for p in all_players:
-        pid = p['id']
-        if pid not in totals:
-            totals[pid] = {'total_score': 0.0, 'total_fantasy_points': 0.0}
-
-    for pid, data in totals.items():
-        supabase.table("players").update(data).eq("id", pid).execute()
-
-def update_fantasy_match(match_id, player_scores_list):
-    """Update entries in a match, re-rank, then recalculate all player totals from scratch."""
-    # Recalculate ranks based on new scores
-    player_scores_list.sort(key=lambda x: (x['score'], x['fantasy_points']), reverse=True)
-    for i in range(len(player_scores_list)):
-        if i > 0:
-            prev = player_scores_list[i - 1]
-            curr = player_scores_list[i]
-            if curr['score'] == prev['score'] and curr['fantasy_points'] == prev['fantasy_points']:
-                curr['rank'] = prev['rank']
-            else:
-                curr['rank'] = i + 1
-        else:
-            player_scores_list[i]['rank'] = 1
-
-    # Push updated entries to DB
-    for p in player_scores_list:
-        supabase.table("entries").update({
-            "score": p['score'],
-            "fantasy_points": p['fantasy_points'],
-            "rank": p['rank']
-        }).eq("id", p['entry_id']).execute()
-
-    # Rebuild all player totals cleanly from scratch
-    recalculate_all_player_totals()
+    striker_lmp = next((p for p in players if p['player_id'] == ball['striker_id']), None)
+    bowler_lmp = next((p for p in players if p['player_id'] == ball['bowler_id']), None)
+    
+    if not striker_lmp or not bowler_lmp: return False
+        
+    team_prefix = striker_lmp['team']
+    
+    # Restore Match
+    new_team_score = match.get(team_prefix + '_score', 0) - ball.get('runs', 0) - ball.get('extras', 0)
+    is_legal = not ball.get('extra_type')
+    new_team_balls = match.get(team_prefix + '_balls', 0) - (1 if is_legal else 0)
+    new_team_wickets = match.get(team_prefix + '_wickets', 0) - (1 if ball.get('is_wicket') else 0)
+    
+    update_live_match(match_id, {
+        team_prefix + '_score': max(0, new_team_score),
+        team_prefix + '_balls': max(0, new_team_balls),
+        team_prefix + '_wickets': max(0, new_team_wickets)
+    })
+    
+    # Restore Striker
+    s_runs = striker_lmp['runs_scored'] - ball.get('runs', 0)
+    s_balls = striker_lmp['balls_faced'] - (0 if ball.get('extra_type') == 'wide' else 1)
+    if ball.get('extra_type') == 'no-ball' and ball.get('runs', 0) == 0: s_balls += 1 # We didn't add a ball if it was a no-ball with 0 runs
+    s_fours = striker_lmp['fours'] - (1 if ball.get('runs') == 4 else 0)
+    s_sixes = striker_lmp['sixes'] - (1 if ball.get('runs') == 6 else 0)
+    
+    update_live_match_player(striker_lmp['id'], {
+        'runs_scored': max(0, s_runs),
+        'balls_faced': max(0, s_balls),
+        'fours': max(0, s_fours),
+        'sixes': max(0, s_sixes),
+        'status': 'batting' if ball.get('is_wicket') else striker_lmp['status'],
+        'is_striker': True,
+        'is_non_striker': False
+    })
+    
+    # Restore Bowler
+    b_runs = bowler_lmp['runs_conceded'] - ball.get('runs', 0) - ball.get('extras', 0)
+    b_balls = bowler_lmp['balls_bowled'] - (1 if is_legal else 0)
+    b_wickets = bowler_lmp['wickets_taken'] - (1 if ball.get('is_wicket') else 0)
+    update_live_match_player(bowler_lmp['id'], {
+        'runs_conceded': max(0, b_runs),
+        'balls_bowled': max(0, b_balls),
+        'wickets_taken': max(0, b_wickets),
+        'is_current_bowler': True
+    })
+    
+    # Restore non-striker
+    non_striker_id = ball.get('non_striker_id')
+    if non_striker_id:
+        ns_lmp = next((p for p in players if p['player_id'] == non_striker_id), None)
+        if ns_lmp:
+            update_live_match_player(ns_lmp['id'], {'is_striker': False, 'is_non_striker': True})
+            
+    # Re-sync
+    striker_lmp.update({'runs_scored': max(0, s_runs), 'balls_faced': max(0, s_balls), 'fours': max(0, s_fours), 'sixes': max(0, s_sixes)})
+    sync_player_career_stats(striker_lmp)
+    # Recalculate manually for undo to keep it consistent if needed, but we deferred it above. 
+    # For undo, we can do it because it's rare.
+    recalculate_player_stats(striker_lmp['player_id'])
+    
+    bowler_lmp.update({'runs_conceded': max(0, b_runs), 'balls_bowled': max(0, b_balls), 'wickets_taken': max(0, b_wickets)})
+    sync_player_career_stats(bowler_lmp)
+    recalculate_player_stats(bowler_lmp['player_id'])
+    
+    return True

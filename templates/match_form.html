@@ -1,96 +1,123 @@
 {% extends "base.html" %}
-{% block title %}Log Match - {{ player.name }}{% endblock %}
+{% block title %}Log Match — {{ player.name }}{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full block">
-    <div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6 mb-10 border border-gray-200">
-        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-6 border-b pb-2">Log Match for {{ player.name }}</h3>
-        
-        <form action="{{ url_for('add_match', player_id=player.id) }}" method="POST" class="space-y-6">
-            
-            <div class="grid grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Date</label>
-                    <input type="date" name="match_date" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Opponent Team</label>
-                    <input type="text" name="opponent" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
-                </div>
-            </div>
-
-            <div class="border-t border-gray-200 pt-6">
-                <h4 class="text-sm font-bold text-indigo-700 uppercase tracking-wide mb-4">Batting Performance</h4>
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">Runs Scored</label>
-                        <input type="number" name="runs" value="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-gray-50">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">Balls Faced</label>
-                        <input type="number" name="balls_faced" value="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-gray-50">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">Fours</label>
-                        <input type="number" name="fours" value="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-gray-50">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">Sixes</label>
-                        <input type="number" name="sixes" value="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-gray-50">
-                    </div>
-                </div>
-            </div>
-
-            <div class="border-t border-gray-200 pt-6">
-                <h4 class="text-sm font-bold text-red-700 uppercase tracking-wide mb-4">Bowling Performance</h4>
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">Overs Bowled (e.g. 3.4)</label>
-                        <input type="number" step="0.1" name="overs_bowled" value="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-gray-50">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">Maidens</label>
-                        <input type="number" name="maidens" value="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-gray-50">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">Runs Conceded</label>
-                        <input type="number" name="runs_conceded" value="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-gray-50">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">Wickets</label>
-                        <input type="number" name="wickets" value="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-gray-50">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">No Balls</label>
-                        <input type="number" name="no_balls" value="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-gray-50">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">Wides</label>
-                        <input type="number" name="wides" value="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-gray-50">
-                    </div>
-                </div>
-            </div>
-
-            <div class="border-t border-gray-200 pt-6">
-                <h4 class="text-sm font-bold text-green-700 uppercase tracking-wide mb-4">Fielding</h4>
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">Catches</label>
-                        <input type="number" name="catches" value="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-gray-50">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">Stumpings</label>
-                        <input type="number" name="stumpings" value="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-gray-50">
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex justify-end pt-6 border-t border-gray-200">
-                <button type="submit" class="bg-indigo-600 border border-transparent rounded-md shadow-sm py-2 px-6 inline-flex justify-center text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto">
-                    Save Match Record
-                </button>
-            </div>
-        </form>
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <!-- Page Title -->
+    <div class="mb-8">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="w-8 h-1 bg-primary rounded-full"></span>
+            <span class="font-headline font-bold uppercase tracking-[0.2em] text-xs text-primary">Data Entry</span>
+        </div>
+        <h2 class="text-4xl font-headline font-black tracking-tight text-on-surface uppercase block truncate">
+            LOG MATCH: {{ player.name }}
+        </h2>
     </div>
+
+    <!-- Match Form -->
+    <section class="kinetic-gradient-border p-6 shadow-2xl h-max">
+        <form action="{{ url_for('add_match', player_id=player.id) }}" method="POST" class="space-y-8">
+            
+            <!-- Match Details -->
+            <div>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-outline-variant/20 p-2 rounded-lg">
+                        <span class="material-symbols-outlined text-outline">calendar_today</span>
+                    </div>
+                    <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Match Details</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Date</label>
+                        <input type="date" name="match_date" required 
+                            class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50 w-full" style="color-scheme: dark;">
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Opponent</label>
+                        <input type="text" name="opponent" required 
+                            class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50" placeholder="e.g. SHC GLADIATORS">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batting Performance -->
+            <div class="border-t border-outline-variant/20 pt-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-primary/10 p-2 rounded-lg">
+                        <span class="material-symbols-outlined text-primary">sports_cricket</span>
+                    </div>
+                    <h4 class="font-headline font-bold text-sm uppercase tracking-wider text-primary">Batting</h4>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {% set batting_fields = [
+                        ('Runs Scored', 'runs', 'primary'),
+                        ('Balls Faced', 'balls_faced', 'on-surface'),
+                        ('Fours', 'fours', 'tertiary'),
+                        ('Sixes', 'sixes', 'secondary')
+                    ] %}
+                    {% for label, name, color in batting_fields %}
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label text-[10px] uppercase font-bold text-on-surface-variant tracking-tighter ml-1">{{ label }}</label>
+                        <input type="number" name="{{ name }}" value="0" 
+                            class="bg-surface-container border-none text-{{ color }} p-4 rounded-xl font-headline font-black text-xl text-center focus:ring-2 focus:ring-{{ color }}/50 transition-all">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Bowling Performance -->
+            <div class="border-t border-outline-variant/20 pt-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-error/10 p-2 rounded-lg">
+                        <span class="material-symbols-outlined text-error">adjust</span>
+                    </div>
+                    <h4 class="font-headline font-bold text-sm uppercase tracking-wider text-error">Bowling</h4>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {% set bowling_fields = [
+                        ('Overs Bowled', 'overs_bowled', 'on-surface', '0.1'),
+                        ('Maidens', 'maidens', 'on-surface', '1'),
+                        ('Runs Conceded', 'runs_conceded', 'error', '1'),
+                        ('Wickets', 'wickets', 'error', '1'),
+                        ('No Balls', 'no_balls', 'on-surface-variant', '1'),
+                        ('Wides', 'wides', 'on-surface-variant', '1')
+                    ] %}
+                    {% for label, name, color, step in bowling_fields %}
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label text-[10px] uppercase font-bold text-on-surface-variant tracking-tighter ml-1">{{ label }}</label>
+                        <input type="number" step="{{ step }}" name="{{ name }}" value="0" 
+                            class="bg-surface-container border-none text-{{ color }} p-3 sm:p-4 rounded-xl font-headline font-bold text-lg text-center focus:ring-2 focus:ring-error/50 transition-all">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Fielding Performance -->
+            <div class="border-t border-outline-variant/20 pt-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-tertiary/10 p-2 rounded-lg">
+                        <span class="material-symbols-outlined text-tertiary">back_hand</span>
+                    </div>
+                    <h4 class="font-headline font-bold text-sm uppercase tracking-wider text-tertiary">Fielding</h4>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label text-[10px] uppercase font-bold text-on-surface-variant tracking-tighter ml-1">Catches</label>
+                        <input type="number" name="catches" value="0" 
+                            class="bg-surface-container border-none text-tertiary p-4 rounded-xl font-headline font-black text-xl text-center focus:ring-2 focus:ring-tertiary/50 transition-all">
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label text-[10px] uppercase font-bold text-on-surface-variant tracking-tighter ml-1">Stumpings</label>
+                        <input type="number" name="stumpings" value="0" 
+                            class="bg-surface-container border-none text-tertiary p-4 rounded-xl font-headline font-black text-xl text-center focus:ring-2 focus:ring-tertiary/50 transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-primary text-on-primary font-headline font-black py-5 rounded-2xl text-lg uppercase tracking-widest shadow-[0_10px_30px_rgba(0,252,65,0.3)] hover:scale-[1.02] active:scale-95 transition-all mt-8">
+                SAVE MATCH RECORD
+            </button>
+        </form>
+    </section>
 </div>
 {% endblock %}
