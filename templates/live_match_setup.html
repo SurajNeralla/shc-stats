@@ -246,11 +246,8 @@
                     this.className = classAddHover;
                     this.innerText = "ADD +";
                 } else {
-                    if (otherSet.has(pId)) {
-                        otherSet.delete(pId);
-                        let ob = document.querySelector(`.team-btn[data-team="${team === 'A' ? 'B' : 'A'}"][data-id="${pId}"]`);
-                        if (ob) { ob.className = classAddHover; ob.innerText = "ADD +"; }
-                    }
+                    // Restriction removed: allow player in both squads
+
                     if (targetSet.size >= 11) { alert("Maximum 11 players per squad."); return; }
                     targetSet.add(pId);
                     this.className = hoverClass;

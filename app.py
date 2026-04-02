@@ -383,13 +383,13 @@ def update_score(match_id):
     players = get_live_match_players(match_id)
     
     # helper
-    def get_p(pid): return next((p for p in players if p['player_id'] == pid), None)
+    def get_lmp(lmp_id): return next((p for p in players if p['id'] == lmp_id), None)
     
     if event_type == 'swap_batter':
-        # New batter comes in
+        # New batter comes in (data contains lmp_id)
         new_batter_id = data.get('new_batter_id')
         role = data.get('role', 'striker')
-        p = get_p(new_batter_id)
+        p = get_lmp(new_batter_id)
         if p:
             if role == 'non_striker':
                 update_live_match_player(p['id'], {'status': 'batting', 'is_striker': False, 'is_non_striker': True})
@@ -398,14 +398,14 @@ def update_score(match_id):
         return {"success": True}, 200
         
     if event_type == 'swap_bowler':
-        # End of over: old bowler stops, new bowler starts
+        # End of over: old bowler stops, new bowler starts (data contains lmp_ids)
         old_bowler_id = data.get('old_bowler_id')
         new_bowler_id = data.get('new_bowler_id')
         
-        ob = get_p(old_bowler_id)
+        ob = get_lmp(old_bowler_id)
         if ob: update_live_match_player(ob['id'], {'is_current_bowler': False})
         
-        nb = get_p(new_bowler_id)
+        nb = get_lmp(new_bowler_id)
         if nb: update_live_match_player(nb['id'], {'status': 'bowling', 'is_current_bowler': True})
         
         # At end of over, strikers swap

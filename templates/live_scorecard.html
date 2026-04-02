@@ -219,7 +219,7 @@
         <select id="newBatterSelect" class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-headline font-bold text-lg focus:ring-2 focus:ring-primary/50 transition-all appearance-none cursor-pointer w-full mb-8 uppercase">
             <option value="" disabled selected>CHOOSE PLAYER...</option>
             {% for p in batting_players %}
-                <option value="{{ p.player_id }}">{{ p.players.name }}</option>
+                <option value="{{ p.id }}">{{ p.players.name }}</option>
             {% endfor %}
         </select>
         <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4">
@@ -237,7 +237,7 @@
         <select id="newBowlerSelect" class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-headline font-bold text-lg focus:ring-2 focus:ring-secondary/50 transition-all appearance-none cursor-pointer w-full mb-8 uppercase">
             <option value="" disabled selected>CHOOSE PLAYER...</option>
             {% for p in bowling_players %}
-                <option value="{{ p.player_id }}">{{ p.players.name }}</option>
+                <option value="{{ p.id }}">{{ p.players.name }}</option>
             {% endfor %}
         </select>
         <div class="flex flex-col sm:flex-row justify-end gap-3 mt-4">
@@ -461,7 +461,7 @@
         let name = sel.options[sel.selectedIndex].text;
         if (!val) return;
         
-        let old_b_id = "{{ bowler.player_id if bowler else '' }}";
+        let old_b_id = "{{ bowler.id if bowler else '' }}";
         let res = await fetch('/api/live-match/{{ match.id }}/score', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
