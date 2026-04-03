@@ -32,7 +32,7 @@
                         <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">HS</th>
                         <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">SR</th>
                         <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Avg</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">100s/50s</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">50s/30s</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -69,7 +69,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">
                             {% if l.matches %}{{ "%.1f"|format(l.runs/l.matches) }}{% else %}0.0{% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.hundreds }} / {{ l.fifties }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.fifties }} / {{ l.thirties }}</td>
                     </tr>
                     {% else %}
                     <tr><td colspan="7" class="px-6 py-12 text-center text-sm text-on-surface-variant">No data yet</td></tr>

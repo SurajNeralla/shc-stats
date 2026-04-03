@@ -119,12 +119,12 @@
                     ('Matches', stats.matches|default(0), 'primary'),
                     ('Runs', stats.runs|default(0), 'primary'),
                     ('Highest', stats.highest_score|default(0), 'on-surface'),
-                    ('100 / 50', (stats.hundreds|default(0))|string + ' / ' + (stats.fifties|default(0))|string, 'on-surface'),
+                    ('50s / 30s', (stats.fifties|default(0))|string + ' / ' + (stats.thirties|default(0))|string, 'on-surface'),
                     ('4s / 6s', (stats.fours|default(0))|string + ' / ' + (stats.sixes|default(0))|string, 'on-surface'),
                     ('Wickets', stats.wickets|default(0), 'secondary'),
                     ('Overs', stats.overs_bowled|default(0), 'on-surface'),
-                    ('Catches', stats.catches|default(0), 'tertiary'),
-                    ('Stumpings', stats.stumpings|default(0), 'tertiary')
+                    ('3W / 5W', (stats.three_wkt_hauls|default(0))|string + ' / ' + (stats.five_fives|default(0))|string, 'secondary'),
+                    ('Catches', stats.catches|default(0), 'tertiary')
                 ] %}
                 {% for label, value, color in stat_items %}
                 <div class="bg-surface-container p-4 rounded-2xl text-center border border-outline-variant/10">

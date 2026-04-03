@@ -50,6 +50,7 @@ def recalculate_player_stats(player_id):
     fours = 0
     sixes = 0
     fifties = 0
+    thirties = 0
     hundreds = 0
     highest_score = 0
     
@@ -57,6 +58,8 @@ def recalculate_player_stats(player_id):
     maidens = 0
     runs_conceded = 0
     wickets = 0
+    three_wkt_hauls = 0
+    five_for_count = 0
     no_balls = 0
     wides = 0
     catches = 0
@@ -73,14 +76,23 @@ def recalculate_player_stats(player_id):
             highest_score = score
         if score >= 100:
             hundreds += 1
-        elif score >= 50:
+        if score >= 50:
             fifties += 1
+        if score >= 30:
+            thirties += 1
             
         overs_b = l.get('overs_bowled', 0)
         overs_bowled += overs_b
         maidens += l.get('maidens', 0)
         runs_conceded += l.get('runs_conceded', 0)
-        wickets += l.get('wickets', 0)
+        
+        w = l.get('wickets', 0)
+        wickets += w
+        if w >= 5:
+            five_for_count += 1
+        if w >= 3:
+            three_wkt_hauls += 1
+            
         no_balls += l.get('no_balls', 0)
         wides += l.get('wides', 0)
         catches += l.get('catches', 0)
@@ -105,12 +117,15 @@ def recalculate_player_stats(player_id):
         "fours": fours,
         "sixes": sixes,
         "fifties": fifties,
+        "thirties": thirties,
         "hundreds": hundreds,
         "highest_score": highest_score,
         "overs_bowled": calculated_overs,
         "maidens": maidens,
         "runs_conceded": runs_conceded,
         "wickets": wickets,
+        "three_wkt_hauls": three_wkt_hauls,
+        "five_fives": five_for_count,
         "no_balls": no_balls,
         "wides": wides,
         "catches": catches,

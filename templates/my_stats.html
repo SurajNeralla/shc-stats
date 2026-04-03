@@ -37,39 +37,36 @@
             <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Trophy Cabinet</h3>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {% set fivefer = namespace(found=false) %}
-            {% for log in logs %}{% if log.wickets >= 5 %}{% set fivefer.found = true %}{% endif %}{% endfor %}
-
-            <!-- Centurion -->
-            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-tertiary/10 border-tertiary/40' if stats.hundreds > 0 else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
-                <div class="text-3xl mb-2">💯</div>
-                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-tertiary' if stats.hundreds > 0 else 'text-outline' }}">Centurion</div>
-                <div class="text-xs text-on-surface-variant mt-1">100+ in a match</div>
-                {% if stats.hundreds > 0 %}<div class="mt-1 text-[9px] font-black text-tertiary">× {{ stats.hundreds }}</div>{% endif %}
+            <!-- Fifty -->
+            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-tertiary/10 border-tertiary/40' if stats.fifties > 0 else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
+                <div class="text-3xl mb-2">🏏</div>
+                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-tertiary' if stats.fifties > 0 else 'text-outline' }}">Fifty</div>
+                <div class="text-xs text-on-surface-variant mt-1">50+ runs in a match</div>
+                {% if stats.fifties > 0 %}<div class="mt-1 text-[9px] font-black text-tertiary">× {{ stats.fifties }} achieved!</div>{% endif %}
             </div>
 
-            <!-- Half-Century -->
-            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-primary/10 border-primary/40' if stats.fifties > 0 else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
-                <div class="text-3xl mb-2">🏏</div>
-                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-primary' if stats.fifties > 0 else 'text-outline' }}">Half-Century</div>
-                <div class="text-xs text-on-surface-variant mt-1">50+ in a match</div>
-                {% if stats.fifties > 0 %}<div class="mt-1 text-[9px] font-black text-primary">× {{ stats.fifties }}</div>{% endif %}
+            <!-- 3-Wicket Haul -->
+            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-primary/10 border-primary/40' if stats.three_wkt_hauls > 0 else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
+                <div class="text-3xl mb-2">🔥</div>
+                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-primary' if stats.three_wkt_hauls > 0 else 'text-outline' }}">3-Wkt Haul</div>
+                <div class="text-xs text-on-surface-variant mt-1">3+ wickets in a match</div>
+                {% if stats.three_wkt_hauls > 0 %}<div class="mt-1 text-[9px] font-black text-primary">× {{ stats.three_wkt_hauls }} achieved!</div>{% endif %}
             </div>
 
             <!-- Five-For -->
-            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-secondary/10 border-secondary/40' if fivefer.found else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
+            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-secondary/10 border-secondary/40' if stats.five_fives > 0 else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
                 <div class="text-3xl mb-2">⚡</div>
-                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-secondary' if fivefer.found else 'text-outline' }}">Five-For</div>
-                <div class="text-xs text-on-surface-variant mt-1">5 wickets in a match</div>
-                {% if fivefer.found %}<div class="mt-1 text-[9px] font-black text-secondary">Achieved!</div>{% endif %}
+                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-secondary' if stats.five_fives > 0 else 'text-outline' }}">Five-For</div>
+                <div class="text-xs text-on-surface-variant mt-1">5+ wickets in a match</div>
+                {% if stats.five_fives > 0 %}<div class="mt-1 text-[9px] font-black text-secondary">× {{ stats.five_fives }} achieved!</div>{% endif %}
             </div>
 
-            <!-- Golden Hands -->
-            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-error/10 border-error/40' if stats.catches >= 5 else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
-                <div class="text-3xl mb-2">🦅</div>
-                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-error' if stats.catches >= 5 else 'text-outline' }}">Golden Hands</div>
-                <div class="text-xs text-on-surface-variant mt-1">5+ career catches</div>
-                {% if stats.catches >= 5 %}<div class="mt-1 text-[9px] font-black text-error">{{ stats.catches }} catches!</div>{% endif %}
+            <!-- Thirties -->
+            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-error/10 border-error/40' if stats.thirties > 0 else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
+                <div class="text-3xl mb-2">📈</div>
+                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-error' if stats.thirties > 0 else 'text-outline' }}">Thirty</div>
+                <div class="text-xs text-on-surface-variant mt-1">30+ runs in a match</div>
+                {% if stats.thirties > 0 %}<div class="mt-1 text-[9px] font-black text-error">× {{ stats.thirties }} achieved!</div>{% endif %}
             </div>
         </div>
     </section>
