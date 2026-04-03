@@ -13,7 +13,7 @@ from models import (
     create_live_match, get_live_match, update_live_match, create_live_match_players,
     get_live_match_players, update_live_match_player, log_live_ball, sync_player_career_stats,
     get_all_live_matches, delete_live_match, undo_last_ball, get_completed_matches,
-    recalculate_player_stats
+    recalculate_player_stats, get_live_match_ball_logs
 )
 
 app = Flask(__name__)
@@ -360,6 +360,9 @@ def live_scorecard(match_id):
     non_striker = next((p for p in batting_players if p.get('is_non_striker')), None)
     bowler = next((p for p in bowling_players if p.get('is_current_bowler')), None)
     
+    # Fetch recent balls for the "this over" tracker
+    ball_logs = get_live_match_ball_logs(match_id)
+    
     return render_template('live_scorecard.html', 
         match=match, 
         batting_team=batting_team, 
@@ -367,7 +370,8 @@ def live_scorecard(match_id):
         bowling_players=bowling_players,
         striker=striker,
         non_striker=non_striker,
-        bowler=bowler
+        bowler=bowler,
+        ball_logs=ball_logs
     )
 
 @app.route('/api/debug/live-match/<match_id>/players')
@@ -662,6 +666,7 @@ def handle_end_match(match_id):
     try:
         players = get_live_match_players(match_id)
         for p in players:
+            sync_player_career_stats(p)
             recalculate_player_stats(p['player_id'])
     except Exception as e:
         print("Error recalculating stats on match end", e)

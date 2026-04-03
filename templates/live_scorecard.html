@@ -391,8 +391,8 @@
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
     const BATTING_TEAM = '{{ batting_team }}';
-    const TOTAL_OVERS = {{ match.total_overs }};
-    const CURRENT_INNINGS = {{ match.current_innings }};
+    const TOTAL_OVERS = {{ match.total_overs | default(20) }};
+    const CURRENT_INNINGS = {{ match.current_innings | default(1) }};
     // Track dismissed players client-side so wicket modal only shows available batters
     const dismissedPlayerIds = new Set();
     // Client-side copies of live player states (lmp id -> {name, runs, balls})
@@ -668,6 +668,31 @@
     let currentOverBalls = [];
     let currentBowlerId = "{{ bowler.id if bowler else '' }}";
 
+    // Initialize from backend ball_logs
+    {% if ball_logs %}
+    (function() {
+        const allBalls = {{ ball_logs | tojson }};
+        const currentInnings = {{ match.current_innings }};
+        // Filter for current innings
+        const inningsBalls = allBalls.filter(b => b.innings === currentInnings);
+        // Find balls in the current over
+        const overStartIdx = Math.floor(inningsBalls.length / 6) * 6;
+        const thisOver = inningsBalls.slice(overStartIdx);
+        
+        thisOver.forEach(b => {
+            let label = b.runs;
+            let type = 'ball';
+            if (b.is_wicket) { label = 'W'; type = 'wicket'; }
+            else if (b.extra_type === 'wide') { label = 'WD'; type = 'extra'; }
+            else if (b.extra_type === 'no-ball') { label = 'NB'; type = 'extra'; }
+            else if (b.runs === 4) type = 'four';
+            else if (b.runs === 6) type = 'six';
+            
+            currentOverBalls.push({label, type});
+        });
+    })();
+    {% endif %}
+
     function addBallBubble(label, type) {
         currentOverBalls.push({label, type});
         renderBallBubbles();
@@ -690,6 +715,8 @@
             container.appendChild(el);
         });
     }
+
+    window.addEventListener('DOMContentLoaded', renderBallBubbles);
 
     // Hook ball bubbles into postScore — wrap original postScore to track balls
     const _origPostScore = postScore;
@@ -799,6 +826,8 @@
     async function endMatch() {
         if(!confirm("INITIATE MATCH END PROTOCOL?")) return;
         
+        showToast('TERMINATING MATCH...', 'blue');
+        
         let res = await fetch('/api/live-match/{{ match.id }}/end', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'}
@@ -806,8 +835,20 @@
         
         if (res.ok) {
             let data = await res.json();
-            alert("MATCH TERMINATED.\nRESULT: " + data.result.toUpperCase());
-            window.location.href = '/dashboard';
+            
+            if (confetti) {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#00E676', '#00B0FF', '#D500F9', '#FFD600']
+                });
+            }
+            
+            setTimeout(() => {
+                alert("MATCH TERMINATED.\nRESULT: " + data.result.toUpperCase());
+                window.location.href = '/dashboard';
+            }, 1000);
         } else {
             showToast('TERMINATION FAILED', 'red');
         }

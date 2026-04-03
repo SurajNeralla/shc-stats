@@ -292,3 +292,7 @@ def undo_last_ball(match_id):
     recalculate_player_stats(bowler_lmp['player_id'])
     
     return True
+
+def get_live_match_ball_logs(match_id):
+    res = supabase.table("live_match_balls").select("*").eq("live_match_id", match_id).order("created_at", desc=False).execute()
+    return res.data

@@ -1,0 +1,12 @@
+Match ID: 4a9269cb-b60e-4176-a1cf-0b7bd6887c42
+Status: innings_1
+Team A score: 14 / 0 Balls: 6
+Team B score: 0 / 0 Balls: 0
+Kittu: Striker:False Non:False Bowler:False Runs:0 Balls:0
+SARAN NERALLA: Striker:False Non:False Bowler:False Runs:0 Balls:0
+Abhi: Striker:False Non:False Bowler:True Runs:0 Balls:0
+SURAJ NERALLA: Striker:True Non:False Bowler:False Runs:5 Balls:2
+SARAN NERALLA: Striker:False Non:True Bowler:False Runs:9 Balls:4
+Prabhas: Striker:False Non:False Bowler:False Runs:0 Balls:0
+Pramod: Striker:False Non:False Bowler:False Runs:0 Balls:0
+Sailesh: Striker:False Non:False Bowler:False Runs:0 Balls:0
