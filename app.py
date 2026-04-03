@@ -356,7 +356,19 @@ def live_scorecard(match_id):
     batting_players = team_a if batting_team == 'team_a' else team_b
     bowling_players = team_b if batting_team == 'team_a' else team_a
     
-    return render_template('live_scorecard.html', match=match, batting_team=batting_team, batting_players=batting_players, bowling_players=bowling_players)
+    striker = next((p for p in batting_players if p.get('is_striker')), None)
+    non_striker = next((p for p in batting_players if p.get('is_non_striker')), None)
+    bowler = next((p for p in bowling_players if p.get('is_current_bowler')), None)
+    
+    return render_template('live_scorecard.html', 
+        match=match, 
+        batting_team=batting_team, 
+        batting_players=batting_players, 
+        bowling_players=bowling_players,
+        striker=striker,
+        non_striker=non_striker,
+        bowler=bowler
+    )
 
 @app.route('/api/debug/live-match/<match_id>/players')
 def debug_players(match_id):
@@ -402,19 +414,26 @@ def update_score(match_id):
         # End of over: old bowler stops, new bowler starts (data contains lmp_ids)
         old_bowler_id = data.get('old_bowler_id')
         new_bowler_id = data.get('new_bowler_id')
+        is_correction = data.get('is_correction', False)
         
         ob = get_lmp(old_bowler_id)
         if ob: update_live_match_player(ob['id'], {'is_current_bowler': False})
         
         nb = get_lmp(new_bowler_id)
-        if nb: update_live_match_player(nb['id'], {'status': 'bowling', 'is_current_bowler': True})
+        if nb: 
+            bowling_team = nb['team']
+            for p in players:
+                if p['team'] == bowling_team and p['is_current_bowler'] and p['id'] != nb['id']:
+                    update_live_match_player(p['id'], {'is_current_bowler': False})
+            update_live_match_player(nb['id'], {'status': 'bowling', 'is_current_bowler': True})
         
         # At end of over, strikers swap
-        striker = next((p for p in players if p['is_striker']), None)
-        non_striker = next((p for p in players if p['is_non_striker']), None)
-        if striker and non_striker:
-            update_live_match_player(striker['id'], {'is_striker': False, 'is_non_striker': True})
-            update_live_match_player(non_striker['id'], {'is_striker': True, 'is_non_striker': False})
+        if not is_correction:
+            striker = next((p for p in players if p['is_striker']), None)
+            non_striker = next((p for p in players if p['is_non_striker']), None)
+            if striker and non_striker:
+                update_live_match_player(striker['id'], {'is_striker': False, 'is_non_striker': True})
+                update_live_match_player(non_striker['id'], {'is_striker': True, 'is_non_striker': False})
             
         return {"success": True}, 200
 

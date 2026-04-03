@@ -55,17 +55,6 @@
     </div>
 
     <!-- Active Players -->
-    {% set striker = None %}
-    {% set non_striker = None %}
-    {% for p in batting_players %}
-        {% if p.is_striker %}{% set striker = p %}{% endif %}
-        {% if p.is_non_striker %}{% set non_striker = p %}{% endif %}
-    {% endfor %}
-    {% set bowler = None %}
-    {% for p in bowling_players %}
-        {% if p.is_current_bowler %}{% set bowler = p %}{% endif %}
-    {% endfor %}
-
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Batting Box -->
         <div class="bg-surface-container-low rounded-[1.5rem] shadow-xl p-6 border-t border-primary/50 relative overflow-hidden">
@@ -173,7 +162,7 @@
         <div class="flex items-center gap-3 mb-3">
             <span class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">THIS OVER</span>
             <span class="flex-1 h-[1px] bg-outline-variant/20"></span>
-            <span class="text-[10px] font-bold text-on-surface-variant" id="over-number-label">OVR {{ match.team_a_balls // 6 if batting_team == 'team_a' else match.team_b_balls // 6 }}</span>
+            <span class="text-[10px] font-bold text-on-surface-variant" id="over-number-label">OVR {{ (match.team_a_balls // 6 if batting_team == 'team_a' else match.team_b_balls // 6) + 1 }}</span>
         </div>
         <div class="flex gap-2 flex-wrap" id="ball-bubbles">
             <!-- Populated by JS -->
@@ -413,6 +402,7 @@
     {% if p.status == 'out' %}dismissedPlayerIds.add('{{ p.id }}');{% endif %}
     {% endfor %}
     let scoringLocked = false; // debounce flag
+    let isBowlerCorrection = false;
     
     function showToast(msg, type='blue') {
         const toast = document.createElement('div');
@@ -462,7 +452,7 @@
                     if (ovsEl) ovsEl.textContent = ovs;
                     // Update over label
                     let ovrLabel = document.getElementById('over-number-label');
-                    if (ovrLabel) ovrLabel.textContent = 'OVR ' + Math.floor(balls / 6);
+                    if (ovrLabel) ovrLabel.textContent = 'OVR ' + (Math.floor(balls / 6) + 1);
                 }
 
                 // Track ball bubble (skip for wicket — handled by confirmWicket)
@@ -558,6 +548,7 @@
                     addBallBubble('EO', 'over-end');
                     showToast('END OF OVER!', 'yellow');
                     currentOverBalls = [];
+                    isBowlerCorrection = false;
                     setTimeout(() => { openModal('bowlerModal'); }, 1200);
                 }
             } else {
@@ -599,6 +590,7 @@
     }
 
     function openChangeBowlerModal() {
+        isBowlerCorrection = true;
         let titleEl = document.getElementById('bowler-modal-title');
         let subtitleEl = document.getElementById('bowler-modal-subtitle');
         if (titleEl) titleEl.innerText = 'Change Bowler';
@@ -643,19 +635,7 @@
         });
         if (res.ok) {
             closeModal('batterModal');
-            if (batterRoleTarget === 'striker') {
-                document.getElementById('striker-name').innerText = name;
-                // Reset new batter's score display to 0(0)
-                document.getElementById('striker-score').innerHTML = `0<span class="text-sm font-normal text-on-surface-variant font-body ml-1">(0)</span>`;
-                document.getElementById('striker-row').classList.remove('hidden');
-                document.getElementById('select-striker-btn').classList.add('hidden');
-            } else {
-                document.getElementById('nonstriker-name').innerText = name;
-                // Reset new batter's score display to 0(0)
-                document.getElementById('nonstriker-score').innerHTML = `0<span class="text-xs font-normal text-outline font-body ml-1">(0)</span>`;
-                document.getElementById('nonstriker-row').classList.remove('hidden');
-                document.getElementById('select-nonstriker-btn').classList.add('hidden');
-            }
+            window.location.reload();
         } else {
             let errData = await res.json();
             showToast('ERROR: ' + (errData.error || res.status), 'red');
@@ -673,20 +653,11 @@
         let res = await fetch('/api/live-match/{{ match.id }}/score', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({type: 'swap_bowler', old_bowler_id: old_b_id || null, new_bowler_id: val})
+            body: JSON.stringify({type: 'swap_bowler', old_bowler_id: old_b_id || null, new_bowler_id: val, is_correction: isBowlerCorrection})
         });
         if (res.ok) {
-            currentBowlerId = val;
             closeModal('bowlerModal');
-            let bNameEl = document.getElementById('bowler-name');
-            bNameEl.innerText = name;
-            bNameEl.dataset.name = name; 
-            document.getElementById('bowler-row').classList.remove('hidden');
-            let existingStats = document.getElementById('bowler-row').querySelector('.bowler-stats');
-            if (existingStats) existingStats.remove();
-            document.getElementById('select-bowler-btn').classList.add('hidden');
-            // Update over label
-            let cBalls = BATTING_TEAM === 'team_a' ? parseInt(document.getElementById('val-overs-a')?.textContent) || 0 : parseInt(document.getElementById('val-overs-b')?.textContent) || 0;
+            window.location.reload();
         } else {
             let errData = await res.json();
             showToast('ERROR: ' + (errData.error || res.status), 'red');
@@ -771,7 +742,7 @@
         await fetch('/api/live-match/{{ match.id }}/score', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({type: 'swap_bowler', old_bowler_id: null, new_bowler_id: bowler})
+            body: JSON.stringify({type: 'swap_bowler', old_bowler_id: null, new_bowler_id: bowler, is_correction: true})
         });
         // Navigate to refreshed scorecard
         window.location.href = '/live-match/{{ match.id }}/scorecard';
