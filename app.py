@@ -227,7 +227,8 @@ def remove_match(player_id, log_id):
 def leaderboard():
     runs_leaders = get_leaderboard_runs()
     wickets_leaders = get_leaderboard_wickets()
-    return render_template('leaderboard.html', runs_leaders=runs_leaders, wickets_leaders=wickets_leaders)
+    logged_in_player_id = session.get('player_id')
+    return render_template('leaderboard.html', runs_leaders=runs_leaders, wickets_leaders=wickets_leaders, logged_in_player_id=logged_in_player_id)
 
 @app.route('/history')
 def match_history():
@@ -437,17 +438,26 @@ def update_score(match_id):
     runs = data.get('runs', 0)
     
     if event_type == 'run':
-        # Update striker
+        # Batch-update striker in one call
         s_runs = striker['runs_scored'] + runs
         s_balls = striker['balls_faced'] + 1
         s_fours = striker['fours'] + (1 if runs == 4 else 0)
         s_sixes = striker['sixes'] + (1 if runs == 6 else 0)
-        update_live_match_player(striker['id'], {'runs_scored': s_runs, 'balls_faced': s_balls, 'fours': s_fours, 'sixes': s_sixes})
+        striker_update = {'runs_scored': s_runs, 'balls_faced': s_balls, 'fours': s_fours, 'sixes': s_sixes}
         
-        # Update bowler
+        # Odd runs swap — fold into same update
+        if runs % 2 != 0 and non_striker:
+            striker_update['is_striker'] = False
+            striker_update['is_non_striker'] = True
+        update_live_match_player(striker['id'], striker_update)
+        
+        # Batch-update bowler in one call
         b_balls = bowler['balls_bowled'] + 1
         b_runs = bowler['runs_conceded'] + runs
         update_live_match_player(bowler['id'], {'balls_bowled': b_balls, 'runs_conceded': b_runs})
+        
+        if runs % 2 != 0 and non_striker:
+            update_live_match_player(non_striker['id'], {'is_striker': True, 'is_non_striker': False})
         
         current_score += runs
         current_balls += 1
@@ -461,24 +471,14 @@ def update_score(match_id):
             'extras': 0,
             'is_wicket': False
         })
-        
-        # Sync immediately
-        striker['runs_scored'] = s_runs; striker['balls_faced'] = s_balls; striker['fours'] = s_fours; striker['sixes'] = s_sixes
-        sync_player_career_stats(striker)
-        bowler['balls_bowled'] = b_balls; bowler['runs_conceded'] = b_runs
-        sync_player_career_stats(bowler)
-        
-        # Odd runs swap
-        if runs % 2 != 0 and striker and non_striker:
-            update_live_match_player(striker['id'], {'is_striker': False, 'is_non_striker': True})
-            update_live_match_player(non_striker['id'], {'is_striker': True, 'is_non_striker': False})
+        # Career stats deferred to match end — no per-ball sync
 
     elif event_type == 'extra':
         extra_type = data.get('extra_type') # wide, no-ball
         is_legal_ball = False
         current_score += 1 + runs # 1 for extra + runs off it
         
-        # Update bowler only runs, no legal ball
+        # Update bowler — runs only, no legal ball counted
         b_runs = bowler['runs_conceded'] + 1 + runs
         update_live_match_player(bowler['id'], {'runs_conceded': b_runs})
         
@@ -493,26 +493,21 @@ def update_score(match_id):
             'is_wicket': False
         })
         
-        # Update striker only if runs were scored off bat (usually extras are extras, but just in case)
-        if runs > 0 and extra_type == 'no-ball':
+        # No-ball with bat runs: credit to striker (no extra ball faced)
+        if runs > 0 and extra_type == 'no-ball' and striker:
             s_runs = striker['runs_scored'] + runs
-            s_balls = striker['balls_faced'] + 1
-            update_live_match_player(striker['id'], {'runs_scored': s_runs, 'balls_faced': s_balls})
-            striker['runs_scored'] = s_runs; striker['balls_faced'] = s_balls;
-            sync_player_career_stats(striker)
-
-        bowler['runs_conceded'] = b_runs
-        sync_player_career_stats(bowler)
+            update_live_match_player(striker['id'], {'runs_scored': s_runs})
+        # Career stats deferred to match end — no per-ball sync
 
     elif event_type == 'wicket':
         current_balls += 1
         current_wickets += 1
         
-        # Update striker
+        # Batch-update striker: mark out in one call
         s_balls = striker['balls_faced'] + 1
-        update_live_match_player(striker['id'], {'balls_faced': s_balls, 'status': 'out', 'is_striker': False})
+        update_live_match_player(striker['id'], {'balls_faced': s_balls, 'status': 'out', 'is_striker': False, 'is_non_striker': False})
         
-        # Update bowler
+        # Batch-update bowler in one call
         b_balls = bowler['balls_bowled'] + 1
         b_wickets = bowler['wickets_taken'] + 1
         update_live_match_player(bowler['id'], {'balls_bowled': b_balls, 'wickets_taken': b_wickets})
@@ -526,21 +521,18 @@ def update_score(match_id):
             'extras': 0,
             'is_wicket': True
         })
-        
-        striker['balls_faced'] = s_balls
-        sync_player_career_stats(striker)
-        bowler['balls_bowled'] = b_balls; bowler['wickets_taken'] = b_wickets;
-        sync_player_career_stats(bowler)
+        # Career stats deferred to match end — no per-ball sync
 
     # Innings end conditions
     is_innings_over = False
     match_won = False
     max_balls = match.get('total_overs', 20) * 6
-    batting_team_count = len([p for p in players if p['team'] == ('team_a' if team_prefix == 'team_a' else 'team_b')])
+    batting_team_count = len([p for p in players if p['team'] == team_prefix])
     
     if current_balls >= max_balls:
         is_innings_over = True
-    if current_wickets >= max(1, batting_team_count - 1):
+    # All players dismissed (single-batting mode: N wickets = innings over)
+    if current_wickets >= batting_team_count:
         is_innings_over = True
         
     if match['current_innings'] == 2:
@@ -556,20 +548,37 @@ def update_score(match_id):
         wickets_col: current_wickets
     })
 
-    # Reload players after updates to get latest state
-    players_after = get_live_match_players(match_id)
-    striker_after = next((p for p in players_after if p['is_striker']), None)
-    ns_after = next((p for p in players_after if p['is_non_striker']), None)
-    bowler_after = next((p for p in players_after if p['is_current_bowler']), None)
+    # Build response from in-memory data (avoid extra DB round-trip)
+    # For wicket: striker is now out, return None so frontend knows to prompt new batter
+    resp_striker = None
+    resp_ns = None
+    resp_bowler = None
+
+    if event_type == 'wicket':
+        # striker is out — frontend will open batter modal; return non-striker info only
+        resp_ns = {"runs": non_striker['runs_scored'], "balls": non_striker['balls_faced']} if non_striker else None
+        resp_bowler_final = {"balls": b_balls, "runs": bowler['runs_conceded'], "wickets": b_wickets}
+    elif event_type == 'run':
+        resp_striker = {"runs": s_runs, "balls": s_balls}
+        resp_ns = {"runs": non_striker['runs_scored'], "balls": non_striker['balls_faced']} if non_striker else None
+        resp_bowler_final = {"balls": b_balls, "runs": b_runs, "wickets": bowler['wickets_taken']}
+    elif event_type == 'extra':
+        resp_striker = {"runs": striker['runs_scored'] + (runs if runs > 0 and data.get('extra_type') == 'no-ball' else 0), "balls": striker['balls_faced']} if striker else None
+        resp_ns = {"runs": non_striker['runs_scored'], "balls": non_striker['balls_faced']} if non_striker else None
+        resp_bowler_final = {"balls": bowler['balls_bowled'], "runs": b_runs, "wickets": bowler['wickets_taken']}
+    else:
+        resp_bowler_final = {"balls": bowler['balls_bowled'], "runs": bowler['runs_conceded'], "wickets": bowler['wickets_taken']}
 
     return {
         "success": True,
-        "end_of_over": (is_legal_ball and current_balls > 0 and current_balls % 6 == 0),
+        "end_of_over": (is_legal_ball and current_balls > 0 and current_balls % 6 == 0 and not is_innings_over),
         "innings_over": is_innings_over,
         "match_won": match_won,
-        "striker": {"runs": striker_after['runs_scored'], "balls": striker_after['balls_faced']} if striker_after else None,
-        "non_striker": {"runs": ns_after['runs_scored'], "balls": ns_after['balls_faced']} if ns_after else None,
-        "bowler": {"balls": bowler_after['balls_bowled'], "runs": bowler_after['runs_conceded'], "wickets": bowler_after['wickets_taken']} if bowler_after else None,
+        "is_wicket": (event_type == 'wicket'),
+        "odd_runs": (event_type == 'run' and runs % 2 != 0),
+        "striker": resp_striker,
+        "non_striker": resp_ns,
+        "bowler": resp_bowler_final,
         "match": {"score": current_score, "balls": current_balls, "wickets": current_wickets}
     }, 200
 
