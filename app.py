@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, jsonify
 from dotenv import load_dotenv
 import os
+from datetime import timedelta
 
 load_dotenv()
 
@@ -18,6 +19,7 @@ from models import (
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "super-secret-default")
+app.permanent_session_lifetime = timedelta(days=30)
 
 # Name → local static image map (used as fallback if DB image_url is empty)
 _NAME_IMAGE_MAP = {
@@ -84,11 +86,13 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
         account_type = request.form.get('account_type', 'admin')
+        remember = request.form.get('remember') == 'on'
         
         if account_type == 'player':
             player = get_player_by_email(email)
             if player and player.get('password') and check_password_hash(player['password'], password):
                 session.pop('admin_token', None)
+                session.permanent = remember
                 session['player_id'] = player['id']
                 return redirect(url_for('my_stats'))
             else:
@@ -97,6 +101,7 @@ def login():
             try:
                 res = supabase.auth.sign_in_with_password({"email": email, "password": password})
                 session.pop('player_id', None)
+                session.permanent = remember
                 session['admin_token'] = res.session.access_token
                 return redirect(url_for('dashboard'))
             except Exception:
@@ -104,15 +109,17 @@ def login():
             
     return render_template('login.html')
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
-    session.pop('admin_token', None)
-    session.pop('player_id', None)
-    try:
-        supabase.auth.sign_out()
-    except Exception:
-        pass
-    return redirect(url_for('login'))
+    if request.method == 'POST':
+        session.pop('admin_token', None)
+        session.pop('player_id', None)
+        try:
+            supabase.auth.sign_out()
+        except Exception:
+            pass
+        return redirect(url_for('login'))
+    return render_template('logout.html')
 
 @app.route('/dashboard')
 def dashboard():
