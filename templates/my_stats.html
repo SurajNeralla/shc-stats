@@ -123,22 +123,30 @@
     <!-- Analytics Charts -->
     {% if logs|length > 1 %}
     <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Form Guide -->
+        <!-- Manhattan Form Guide -->
         <div class="bg-surface-container-low p-6 rounded-[1.5rem] shadow-xl">
             <div class="flex items-center gap-3 mb-5">
-                <div class="bg-primary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-primary">trending_up</span></div>
-                <h3 class="font-headline font-bold text-base uppercase tracking-wider">Form Guide</h3>
-                <span class="text-[9px] text-outline uppercase tracking-widest">(Last {{ [logs|length, 8]|min }} matches)</span>
+                <div class="bg-primary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-primary">bar_chart</span></div>
+                <div>
+                    <h3 class="font-headline font-bold text-base uppercase tracking-wider leading-none">Manhattan Chart</h3>
+                    <span class="text-[9px] text-outline uppercase tracking-widest">Runs &amp; Wickets · Last {{ [logs|length, 8]|min }} matches</span>
+                </div>
             </div>
             <div class="relative h-52"><canvas id="formChart"></canvas></div>
         </div>
-        <!-- Radar -->
+        <!-- Boundary Doughnut -->
         <div class="bg-surface-container-low p-6 rounded-[1.5rem] shadow-xl">
             <div class="flex items-center gap-3 mb-5">
-                <div class="bg-secondary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-secondary">radar</span></div>
-                <h3 class="font-headline font-bold text-base uppercase tracking-wider">Player Radar</h3>
+                <div class="bg-tertiary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-tertiary">donut_large</span></div>
+                <div>
+                    <h3 class="font-headline font-bold text-base uppercase tracking-wider leading-none">Run Breakdown</h3>
+                    <span class="text-[9px] text-outline uppercase tracking-widest">Where your runs come from</span>
+                </div>
             </div>
-            <div class="relative h-52"><canvas id="radarChart"></canvas></div>
+            <div class="flex items-center gap-4">
+                <div class="relative h-44 w-44 flex-shrink-0"><canvas id="doughnutChart"></canvas></div>
+                <div class="space-y-2 text-xs" id="donut-legend"></div>
+            </div>
         </div>
     </section>
     {% endif %}
@@ -253,40 +261,41 @@ Chart.defaults.color = '#adaaaa';
 Chart.defaults.borderColor = 'rgba(72,72,71,0.2)';
 Chart.defaults.font.family = 'Inter';
 
-// --- Form Guide Chart ---
+// --- Manhattan Form Guide (Bar + Line Combo) ---
 {% if logs|length > 1 %}
 const formLogs = {{ logs[-8:] | tojson }};
-const formLabels = formLogs.map((l, i) => l.opponent ? 'vs ' + l.opponent.substring(0,8) : 'M' + (i+1));
+const formLabels = formLogs.map((l, i) => l.opponent ? 'vs ' + l.opponent.substring(0,10) : 'M' + (i+1));
 const runsData = formLogs.map(l => l.runs || 0);
 const wicketsData = formLogs.map(l => l.wickets || 0);
 
 new Chart(document.getElementById('formChart'), {
-    type: 'line',
+    type: 'bar',
     data: {
         labels: formLabels,
         datasets: [
             {
                 label: 'Runs',
                 data: runsData,
-                borderColor: '#9cff93',
-                backgroundColor: 'rgba(156,255,147,0.08)',
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#9cff93',
-                pointRadius: 4,
-                pointHoverRadius: 7,
+                type: 'bar',
+                backgroundColor: runsData.map(r => r >= 50 ? 'rgba(0,252,65,0.85)' : r >= 25 ? 'rgba(156,255,147,0.6)' : 'rgba(156,255,147,0.3)'),
+                borderColor: 'rgba(0,252,65,0.9)',
+                borderWidth: 1,
+                borderRadius: 6,
+                borderSkipped: false,
                 yAxisID: 'y'
             },
             {
                 label: 'Wickets',
                 data: wicketsData,
+                type: 'line',
                 borderColor: '#53a0ff',
-                backgroundColor: 'rgba(83,160,255,0.08)',
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#53a0ff',
-                pointRadius: 4,
-                pointHoverRadius: 7,
+                backgroundColor: 'rgba(83,160,255,0.1)',
+                fill: false,
+                tension: 0.3,
+                pointBackgroundColor: wicketsData.map(w => w >= 3 ? '#53a0ff' : 'rgba(83,160,255,0.5)'),
+                pointRadius: wicketsData.map(w => w >= 3 ? 6 : 4),
+                pointHoverRadius: 8,
+                borderWidth: 2,
                 yAxisID: 'y1'
             }
         ]
@@ -295,60 +304,94 @@ new Chart(document.getElementById('formChart'), {
         responsive: true,
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { position: 'top', labels: { boxWidth: 8, usePointStyle: true, pointStyle: 'circle', padding: 16 } } },
+        plugins: {
+            legend: { position: 'top', labels: { boxWidth: 10, usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 11, weight: '700' } } },
+            tooltip: {
+                callbacks: {
+                    afterLabel: (ctx) => {
+                        if (ctx.datasetIndex === 0) {
+                            const r = ctx.raw;
+                            return r >= 50 ? '🔥 fifty+' : r >= 25 ? '👍 good knock' : '';
+                        }
+                        if (ctx.datasetIndex === 1 && ctx.raw >= 3) return '⚡ great spell';
+                        return '';
+                    }
+                }
+            }
+        },
         scales: {
-            y: { type: 'linear', position: 'left', grid: { color: 'rgba(72,72,71,0.15)' }, ticks: { stepSize: 10 } },
-            y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { stepSize: 1, precision: 0 } }
+            x: { grid: { display: false }, ticks: { font: { size: 9, weight: '700' }, maxRotation: 35 } },
+            y: { type: 'linear', position: 'left', grid: { color: 'rgba(72,72,71,0.15)' }, ticks: { stepSize: 10, font: { size: 10 } }, title: { display: true, text: 'RUNS', font: { size: 9, weight: '700' }, color: '#9cff93' } },
+            y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, min: 0, ticks: { stepSize: 1, precision: 0, font: { size: 10 } }, title: { display: true, text: 'WKTS', font: { size: 9, weight: '700' }, color: '#53a0ff' } }
         }
     }
 });
 
-// --- Radar Chart ---
-const totalRuns = {{ stats.runs | default(0) }};
-const totalWickets = {{ stats.wickets | default(0) }};
-const totalMatches = {{ stats.matches | default(1) or 1 }};
-const highest = {{ stats.highest_score | default(0) }};
-const totalCatches = {{ stats.catches | default(0) }};
-const totalFifties = {{ stats.fifties | default(0) }};
+// --- Boundary Doughnut Chart ---
+const allLogs = {{ logs | tojson }};
+const totalFours = allLogs.reduce((s, l) => s + (l.fours || 0), 0);
+const totalSixes = allLogs.reduce((s, l) => s + (l.sixes || 0), 0);
+const fourRuns = totalFours * 4;
+const sixRuns = totalSixes * 6;
+const boundaryRuns = fourRuns + sixRuns;
+const totalR = {{ stats.runs | default(0) }};
+const otherRuns = Math.max(0, totalR - boundaryRuns);
 
-// Normalise to 0-100 scale relative to reasonable max values
-function norm(val, max) { return Math.min(100, Math.round((val / max) * 100)); }
+const donutData = [fourRuns, sixRuns, otherRuns];
+const donutLabels = ['Fours (4s)', 'Sixes (6s)', 'Singles/2s/3s'];
+const donutColors = ['rgba(83,160,255,0.85)', 'rgba(156,255,147,0.85)', 'rgba(72,72,71,0.5)'];
+const donutBorder = ['#53a0ff', '#9cff93', '#484847'];
 
-new Chart(document.getElementById('radarChart'), {
-    type: 'radar',
+new Chart(document.getElementById('doughnutChart'), {
+    type: 'doughnut',
     data: {
-        labels: ['Runs/Match', 'Highest Score', 'Wickets/Match', 'Fifties', 'Catches', 'Consistency'],
+        labels: donutLabels,
         datasets: [{
-            label: '{{ player.name }}',
-            data: [
-                norm(totalRuns / totalMatches, 60),
-                norm(highest, 150),
-                norm(totalWickets / totalMatches * 10, 10),
-                norm(totalFifties, 10),
-                norm(totalCatches, 15),
-                norm(totalMatches, 30)
-            ],
-            borderColor: '#9cff93',
-            backgroundColor: 'rgba(156,255,147,0.1)',
-            pointBackgroundColor: '#9cff93',
-            pointHoverBackgroundColor: '#00FC41',
+            data: donutData,
+            backgroundColor: donutColors,
+            borderColor: donutBorder,
+            borderWidth: 2,
+            hoverOffset: 8
         }]
     },
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-            r: {
-                min: 0, max: 100,
-                grid: { color: 'rgba(72,72,71,0.25)' },
-                angleLines: { color: 'rgba(72,72,71,0.25)' },
-                pointLabels: { font: { size: 10, weight: '700' }, color: '#adaaaa' },
-                ticks: { display: false }
+        cutout: '68%',
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) => {
+                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                        const pct = total > 0 ? Math.round((ctx.raw / total) * 100) : 0;
+                        return ` ${ctx.raw} runs (${pct}%)`;
+                    }
+                }
             }
         }
     }
 });
+
+// Custom legend
+const legendEl = document.getElementById('donut-legend');
+const totalDonut = donutData.reduce((a,b) => a+b, 0);
+const legendEmoji = ['🔵', '🟢', '⚪'];
+if (legendEl) {
+    donutLabels.forEach((lbl, i) => {
+        const pct = totalDonut > 0 ? Math.round((donutData[i] / totalDonut) * 100) : 0;
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-2';
+        div.innerHTML = `<span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${donutColors[i]};border:1px solid ${donutBorder[i]}"></span><span class="font-bold text-on-surface-variant">${lbl}</span><span class="ml-auto font-headline font-black text-on-surface">${pct}%</span>`;
+        legendEl.appendChild(div);
+    });
+    // Boundary % summary
+    const bPct = totalDonut > 0 ? Math.round((boundaryRuns / totalDonut) * 100) : 0;
+    const sumDiv = document.createElement('div');
+    sumDiv.className = 'mt-3 pt-3 border-t border-outline-variant/20';
+    sumDiv.innerHTML = `<div class="text-[9px] uppercase tracking-widest text-outline font-bold mb-1">Boundary %</div><div class="text-2xl font-headline font-black text-primary">${bPct}%</div><div class="text-[9px] text-on-surface-variant">of runs from 4s &amp; 6s</div>`;
+    legendEl.appendChild(sumDiv);
+}
 {% endif %}
 
 // --- Player Card Generation ---
