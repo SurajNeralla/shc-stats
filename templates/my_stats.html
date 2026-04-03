@@ -123,13 +123,13 @@
     <!-- Analytics Charts -->
     {% if logs|length > 1 %}
     <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Manhattan Form Guide -->
+        <!-- Grouped Bar + Line Combo -->
         <div class="bg-surface-container-low p-6 rounded-[1.5rem] shadow-xl">
             <div class="flex items-center gap-3 mb-5">
-                <div class="bg-primary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-primary">bar_chart</span></div>
+                <div class="bg-primary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-primary">stacked_bar_chart</span></div>
                 <div>
-                    <h3 class="font-headline font-bold text-base uppercase tracking-wider leading-none">Manhattan Chart</h3>
-                    <span class="text-[9px] text-outline uppercase tracking-widest">Runs &amp; Wickets · Last {{ [logs|length, 8]|min }} matches</span>
+                    <h3 class="font-headline font-bold text-base uppercase tracking-wider leading-none">Performance Chart</h3>
+                    <span class="text-[9px] text-outline uppercase tracking-widest">Bat &amp; Bowl · Last {{ [logs|length, 8]|min }} matches</span>
                 </div>
             </div>
             <div class="relative h-52"><canvas id="formChart"></canvas></div>
@@ -261,12 +261,13 @@ Chart.defaults.color = '#adaaaa';
 Chart.defaults.borderColor = 'rgba(72,72,71,0.2)';
 Chart.defaults.font.family = 'Inter';
 
-// --- Manhattan Form Guide (Bar + Line Combo) ---
+// --- Grouped Bar + Line Combo Chart ---
 {% if logs|length > 1 %}
 const formLogs = {{ logs[-8:] | tojson }};
 const formLabels = formLogs.map((l, i) => l.opponent ? 'vs ' + l.opponent.substring(0,10) : 'M' + (i+1));
-const runsData = formLogs.map(l => l.runs || 0);
-const wicketsData = formLogs.map(l => l.wickets || 0);
+const runsScored  = formLogs.map(l => l.runs || 0);
+const runsConceded = formLogs.map(l => l.runs_conceded || 0);
+const wicketsTaken = formLogs.map(l => l.wickets || 0);
 
 new Chart(document.getElementById('formChart'), {
     type: 'bar',
@@ -274,29 +275,45 @@ new Chart(document.getElementById('formChart'), {
         labels: formLabels,
         datasets: [
             {
-                label: 'Runs',
-                data: runsData,
+                label: 'Runs Scored',
+                data: runsScored,
                 type: 'bar',
-                backgroundColor: runsData.map(r => r >= 50 ? 'rgba(0,252,65,0.85)' : r >= 25 ? 'rgba(156,255,147,0.6)' : 'rgba(156,255,147,0.3)'),
+                backgroundColor: runsScored.map(r => r >= 50 ? 'rgba(0,252,65,0.9)' : r >= 25 ? 'rgba(156,255,147,0.65)' : 'rgba(156,255,147,0.3)'),
                 borderColor: 'rgba(0,252,65,0.9)',
                 borderWidth: 1,
-                borderRadius: 6,
-                borderSkipped: false,
-                yAxisID: 'y'
+                borderRadius: { topLeft: 5, topRight: 5 },
+                borderSkipped: 'bottom',
+                yAxisID: 'y',
+                order: 2
+            },
+            {
+                label: 'Runs Conceded',
+                data: runsConceded,
+                type: 'bar',
+                backgroundColor: runsConceded.map(r => r > 30 ? 'rgba(255,115,81,0.75)' : 'rgba(255,115,81,0.35)'),
+                borderColor: 'rgba(255,115,81,0.8)',
+                borderWidth: 1,
+                borderRadius: { topLeft: 5, topRight: 5 },
+                borderSkipped: 'bottom',
+                yAxisID: 'y',
+                order: 2
             },
             {
                 label: 'Wickets',
-                data: wicketsData,
+                data: wicketsTaken,
                 type: 'line',
                 borderColor: '#53a0ff',
-                backgroundColor: 'rgba(83,160,255,0.1)',
-                fill: false,
-                tension: 0.3,
-                pointBackgroundColor: wicketsData.map(w => w >= 3 ? '#53a0ff' : 'rgba(83,160,255,0.5)'),
-                pointRadius: wicketsData.map(w => w >= 3 ? 6 : 4),
-                pointHoverRadius: 8,
-                borderWidth: 2,
-                yAxisID: 'y1'
+                backgroundColor: 'rgba(83,160,255,0.12)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: wicketsTaken.map(w => w >= 3 ? '#53a0ff' : 'rgba(83,160,255,0.6)'),
+                pointBorderColor: '#0e0e0e',
+                pointBorderWidth: 2,
+                pointRadius: wicketsTaken.map(w => w >= 3 ? 7 : 4),
+                pointHoverRadius: 9,
+                borderWidth: 2.5,
+                yAxisID: 'y1',
+                order: 1
             }
         ]
     },
@@ -305,24 +322,47 @@ new Chart(document.getElementById('formChart'), {
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: {
-            legend: { position: 'top', labels: { boxWidth: 10, usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 11, weight: '700' } } },
+            legend: {
+                position: 'top',
+                labels: { boxWidth: 10, usePointStyle: true, pointStyle: 'rectRounded', padding: 12, font: { size: 10, weight: '700' } }
+            },
             tooltip: {
+                backgroundColor: 'rgba(14,14,14,0.95)',
+                borderColor: 'rgba(72,72,71,0.4)',
+                borderWidth: 1,
+                titleFont: { size: 11, weight: '900', family: 'Lexend' },
+                bodyFont: { size: 11 },
+                padding: 10,
                 callbacks: {
                     afterLabel: (ctx) => {
-                        if (ctx.datasetIndex === 0) {
-                            const r = ctx.raw;
-                            return r >= 50 ? '🔥 fifty+' : r >= 25 ? '👍 good knock' : '';
-                        }
-                        if (ctx.datasetIndex === 1 && ctx.raw >= 3) return '⚡ great spell';
+                        if (ctx.datasetIndex === 0 && ctx.raw >= 50) return '  🔥 Fifty!';
+                        if (ctx.datasetIndex === 0 && ctx.raw >= 25) return '  👍 Good knock';
+                        if (ctx.datasetIndex === 2 && ctx.raw >= 3)  return '  ⚡ 3-for or better!';
                         return '';
                     }
                 }
             }
         },
         scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 9, weight: '700' }, maxRotation: 35 } },
-            y: { type: 'linear', position: 'left', grid: { color: 'rgba(72,72,71,0.15)' }, ticks: { stepSize: 10, font: { size: 10 } }, title: { display: true, text: 'RUNS', font: { size: 9, weight: '700' }, color: '#9cff93' } },
-            y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, min: 0, ticks: { stepSize: 1, precision: 0, font: { size: 10 } }, title: { display: true, text: 'WKTS', font: { size: 9, weight: '700' }, color: '#53a0ff' } }
+            x: {
+                grid: { display: false },
+                ticks: { font: { size: 9, weight: '700' }, maxRotation: 35, color: '#adaaaa' }
+            },
+            y: {
+                type: 'linear',
+                position: 'left',
+                grid: { color: 'rgba(72,72,71,0.12)' },
+                ticks: { stepSize: 10, font: { size: 9 }, color: '#adaaaa' },
+                title: { display: true, text: 'RUNS', font: { size: 8, weight: '900' }, color: '#adaaaa' }
+            },
+            y1: {
+                type: 'linear',
+                position: 'right',
+                grid: { drawOnChartArea: false },
+                min: 0, max: Math.max(5, ...wicketsTaken) + 1,
+                ticks: { stepSize: 1, precision: 0, font: { size: 9 }, color: '#53a0ff' },
+                title: { display: true, text: 'WKTS', font: { size: 8, weight: '900' }, color: '#53a0ff' }
+            }
         }
     }
 });
