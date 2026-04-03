@@ -326,32 +326,62 @@
 </div>
 
 <!-- Victory Celebration Overlay -->
-<div id="victory-overlay" class="fixed inset-0 bg-black/95 backdrop-blur-2xl hidden flex items-center justify-center z-[250] transition-all duration-1000 opacity-0">
-    <div class="text-center px-8 relative max-w-2xl w-full">
+<div id="victory-overlay" class="fixed inset-0 bg-black/95 backdrop-blur-2xl hidden flex items-center justify-center z-[250] transition-all duration-1000 opacity-0 overflow-y-auto">
+    <div class="text-center px-6 py-10 relative max-w-2xl w-full mx-auto">
         <!-- Kinetic Background Pulse -->
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] animate-pulse"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] animate-pulse pointer-events-none"></div>
         
         <div class="relative z-10 scale-90 opacity-0 transition-all duration-700" id="victory-content">
-            <div class="mb-8 inline-block transform hover:rotate-12 transition-transform duration-500">
-                <span class="material-symbols-outlined text-9xl text-primary drop-shadow-[0_0_30px_rgba(0,252,65,0.6)]">emoji_events</span>
+            <div class="mb-4 inline-block transform hover:rotate-12 transition-transform duration-500">
+                <span class="material-symbols-outlined text-8xl text-primary drop-shadow-[0_0_30px_rgba(0,252,65,0.6)]" style="font-size:80px">emoji_events</span>
             </div>
             
-            <h2 class="text-7xl md:text-9xl font-headline font-black text-white uppercase tracking-tighter mb-4 italic drop-shadow-2xl">VICTORY</h2>
-            <div class="h-1.5 w-full bg-gradient-to-r from-transparent via-primary to-transparent mb-10 opacity-50"></div>
+            <h2 class="text-6xl md:text-8xl font-headline font-black text-white uppercase tracking-tighter mb-2 italic drop-shadow-2xl">VICTORY</h2>
+            <div class="h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent mb-6 opacity-50"></div>
             
-            <h3 id="winner-team-name" class="text-5xl md:text-7xl font-headline font-black text-primary uppercase tracking-widest mb-6 break-words px-4">TEAM NAME</h3>
-            <div class="inline-block px-8 py-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm mb-12">
-                <p id="winner-result-text" class="text-xl md:text-2xl font-headline font-black text-on-surface-variant uppercase tracking-[0.2em]">Result loading...</p>
+            <h3 id="winner-team-name" class="text-4xl md:text-6xl font-headline font-black text-primary uppercase tracking-widest mb-4 break-words px-4">TEAM NAME</h3>
+            <div class="inline-block px-6 py-3 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm mb-8">
+                <p id="winner-result-text" class="text-lg md:text-xl font-headline font-black text-on-surface-variant uppercase tracking-[0.2em]">Result loading...</p>
             </div>
-            
-            <div class="flex flex-col items-center gap-6">
-                <div class="flex items-center gap-4 text-white/40 text-[10px] font-black uppercase tracking-[0.5em]">
-                    <span>Archiving Match Data</span>
-                    <div class="flex gap-1.5">
-                        <div class="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-                        <div class="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                        <div class="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]"></div>
+
+            <!-- Post Match Awards -->
+            <div id="awards-section" class="hidden w-full mb-8">
+                <div class="flex items-center gap-3 mb-5 justify-center">
+                    <span class="flex-1 h-px bg-white/10 max-w-[60px]"></span>
+                    <span class="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Match Awards</span>
+                    <span class="flex-1 h-px bg-white/10 max-w-[60px]"></span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- Man of the Match -->
+                    <div id="motm-card" class="hidden bg-gradient-to-br from-[#ffd170]/10 to-transparent border border-tertiary/30 rounded-2xl p-4 text-center">
+                        <div class="text-3xl mb-2">🏆</div>
+                        <div class="text-[9px] font-black uppercase tracking-[0.2em] text-tertiary mb-1">Man of the Match</div>
+                        <div id="motm-name" class="text-lg font-headline font-black text-white uppercase tracking-wide"></div>
+                        <div id="motm-stats" class="text-xs text-on-surface-variant mt-1 font-bold"></div>
                     </div>
+                    <!-- Best Batsman -->
+                    <div id="best-bat-card" class="hidden bg-gradient-to-br from-primary/10 to-transparent border border-primary/30 rounded-2xl p-4 text-center">
+                        <div class="text-3xl mb-2">🏏</div>
+                        <div class="text-[9px] font-black uppercase tracking-[0.2em] text-primary mb-1">Best Batsman</div>
+                        <div id="best-bat-name" class="text-lg font-headline font-black text-white uppercase tracking-wide"></div>
+                        <div id="best-bat-stats" class="text-xs text-on-surface-variant mt-1 font-bold"></div>
+                    </div>
+                    <!-- Best Bowler -->
+                    <div id="best-bowl-card" class="hidden bg-gradient-to-br from-secondary/10 to-transparent border border-secondary/30 rounded-2xl p-4 text-center">
+                        <div class="text-3xl mb-2">⚡</div>
+                        <div class="text-[9px] font-black uppercase tracking-[0.2em] text-secondary mb-1">Best Bowler</div>
+                        <div id="best-bowl-name" class="text-lg font-headline font-black text-white uppercase tracking-wide"></div>
+                        <div id="best-bowl-stats" class="text-xs text-on-surface-variant mt-1 font-bold"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-center gap-4 text-white/30 text-[10px] font-black uppercase tracking-[0.4em]">
+                <span>Archiving Match Data</span>
+                <div class="flex gap-1.5">
+                    <div class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></div>
+                    <div class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                    <div class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.4s]"></div>
                 </div>
             </div>
         </div>
@@ -841,7 +871,7 @@
         }
     });
 
-    function triggerVictory(winnerName, resultText) {
+    function triggerVictory(winnerName, resultText, awards) {
         const overlay = document.getElementById('victory-overlay');
         const content = document.getElementById('victory-content');
         const nameEl = document.getElementById('winner-team-name');
@@ -849,6 +879,37 @@
         
         if (nameEl) nameEl.textContent = winnerName;
         if (resultEl) resultEl.textContent = resultText;
+
+        // Populate awards if they exist
+        if (awards) {
+            const awardsSection = document.getElementById('awards-section');
+            if (awardsSection) awardsSection.classList.remove('hidden');
+
+            if (awards.motm) {
+                const c = document.getElementById('motm-card');
+                if (c) {
+                    c.classList.remove('hidden');
+                    document.getElementById('motm-name').textContent = awards.motm.name;
+                    document.getElementById('motm-stats').textContent = `${awards.motm.runs}R / ${awards.motm.wickets}W`;
+                }
+            }
+            if (awards.best_batsman) {
+                const c = document.getElementById('best-bat-card');
+                if (c) {
+                    c.classList.remove('hidden');
+                    document.getElementById('best-bat-name').textContent = awards.best_batsman.name;
+                    document.getElementById('best-bat-stats').textContent = `${awards.best_batsman.runs} runs (${awards.best_batsman.balls}b) · ${awards.best_batsman.fours}×4 ${awards.best_batsman.sixes}×6`;
+                }
+            }
+            if (awards.best_bowler) {
+                const c = document.getElementById('best-bowl-card');
+                if (c) {
+                    c.classList.remove('hidden');
+                    document.getElementById('best-bowl-name').textContent = awards.best_bowler.name;
+                    document.getElementById('best-bowl-stats').textContent = `${awards.best_bowler.wickets}W / ${awards.best_bowler.runs}R (${awards.best_bowler.overs}ov)`;
+                }
+            }
+        }
         
         overlay.classList.remove('hidden');
         setTimeout(() => { 
@@ -860,21 +921,20 @@
         }, 50);
 
         // Continuous high-intensity confetti
-        const duration = 6 * 1000;
+        const duration = 8 * 1000;
         const animationEnd = Date.now() + duration;
         const defaults = { startVelocity: 45, spread: 360, ticks: 100, zIndex: 300, scalar: 1.2 };
 
         const interval = setInterval(function() {
             const timeLeft = animationEnd - Date.now();
             if (timeLeft <= 0) return clearInterval(interval);
-
             const particleCount = 60 * (timeLeft / duration);
             confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random() * 0.4, y: Math.random() - 0.2 } }));
             confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random() * 0.4 + 0.6, y: Math.random() - 0.2 } }));
         }, 300);
 
-        // Auto-finalize after 6 seconds of glory
-        setTimeout(silentEndMatch, 6000);
+        // Auto-finalize after 10 seconds of glory (awards need more time to read)
+        setTimeout(silentEndMatch, 10000);
     }
 
     async function silentEndMatch() {
@@ -884,7 +944,7 @@
                 headers: {'Content-Type': 'application/json'}
             });
             if (res.ok) {
-                window.location.href = '/dashboard';
+                setTimeout(() => { window.location.href = '/dashboard'; }, 500);
             } else {
                 // Fallback to manual end if auto fails
                 let sp = document.getElementById('scoring-panel');
@@ -924,7 +984,6 @@
     }
 
     async function endMatch() {
-        // Automatically display the winning animation instead of prompting
         showToast('TERMINATING MATCH...', 'blue');
         
         let res = await fetch('/api/live-match/{{ match.id }}/end', {
@@ -934,18 +993,13 @@
         
         if (res.ok) {
             let data = await res.json();
-            
-            // Extract winner from data.result
             let resultText = data.result || "MATCH COMPLETED";
             let winnerMatch = resultText.match(/^(.*?) won$/i);
             let winner = winnerMatch ? winnerMatch[1].toUpperCase() : "MATCH COMPLETED";
-            
             if (resultText.toLowerCase().includes('tied') || resultText.toLowerCase().includes('drawn')) {
                 winner = "MATCH TIED";
             }
-            
-            // Trigger the automatic victory animation overlay
-            triggerVictory(winner, resultText);
+            triggerVictory(winner, resultText, data.awards || null);
         } else {
             showToast('TERMINATION FAILED', 'red');
         }

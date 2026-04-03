@@ -690,16 +690,51 @@ def handle_end_match(match_id):
     
     update_live_match(match_id, {'status': 'completed', 'match_result': result})
     
+    awards = {"best_batsman": None, "best_bowler": None, "motm": None}
     # Recalculate career stats at the end of the match to save loading time during live play
     try:
         players = get_live_match_players(match_id)
         for p in players:
             sync_player_career_stats(p)
             recalculate_player_stats(p['player_id'])
-    except Exception as e:
-        print("Error recalculating stats on match end", e)
         
-    return {"success": True, "result": result}, 200
+        # --- Compute Post-Match Awards ---
+        batters = [p for p in players if p.get('runs_scored', 0) > 0 or p.get('balls_faced', 0) > 0]
+        bowlers = [p for p in players if p.get('balls_bowled', 0) > 0]
+        
+        if batters:
+            best_bat = max(batters, key=lambda p: (p.get('runs_scored', 0), p.get('balls_faced', 0)))
+            awards["best_batsman"] = {
+                "name": best_bat["players"]["name"],
+                "runs": best_bat.get("runs_scored", 0),
+                "balls": best_bat.get("balls_faced", 0),
+                "fours": best_bat.get("fours", 0),
+                "sixes": best_bat.get("sixes", 0),
+            }
+        
+        if bowlers:
+            best_bowl = min(bowlers, key=lambda p: (-p.get('wickets_taken', 0), p.get('runs_conceded', 9999)))
+            overs_b = (best_bowl['balls_bowled'] // 6) + ((best_bowl['balls_bowled'] % 6) / 10.0)
+            awards["best_bowler"] = {
+                "name": best_bowl["players"]["name"],
+                "wickets": best_bowl.get("wickets_taken", 0),
+                "runs": best_bowl.get("runs_conceded", 0),
+                "overs": round(overs_b, 1),
+            }
+        
+        # MOTM = highest impact score (runs + wickets*20)
+        all_players_scored = [p for p in players if p.get('runs_scored', 0) > 0 or p.get('wickets_taken', 0) > 0]
+        if all_players_scored:
+            motm = max(all_players_scored, key=lambda p: p.get('runs_scored', 0) + p.get('wickets_taken', 0) * 20)
+            awards["motm"] = {
+                "name": motm["players"]["name"],
+                "runs": motm.get("runs_scored", 0),
+                "wickets": motm.get("wickets_taken", 0),
+            }
+    except Exception as e:
+        print("Error computing awards or recalculating stats on match end", e)
+        
+    return {"success": True, "result": result, "awards": awards}, 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

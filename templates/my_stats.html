@@ -2,18 +2,20 @@
 {% block title %}My Stats — {{ player.name }}{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-    <!-- Player Header -->
-    <div class="kinetic-gradient-border p-6 shadow-2xl mb-8 flex items-center gap-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+
+    <!-- Player Header Card -->
+    <div class="kinetic-gradient-border p-6 shadow-2xl flex items-center gap-6 relative overflow-hidden">
+        <div class="absolute -top-16 -right-16 w-48 h-48 bg-primary/10 rounded-full blur-[80px] pointer-events-none"></div>
         {% set img_path = player.image_url if (player.image_url and player.image_url.startswith('/static/')) else player_image_url(player.name) %}
         {% if img_path %}
-        <img class="h-20 w-20 rounded-2xl object-cover border-2 border-primary/30 shadow-lg" src="{{ img_path }}" alt="">
+        <img class="h-24 w-24 rounded-2xl object-cover border-2 border-primary/30 shadow-lg flex-shrink-0" src="{{ img_path }}" alt="">
         {% else %}
-        <div class="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-3xl font-headline font-black border-2 border-primary/30">
+        <div class="h-24 w-24 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-4xl font-headline font-black border-2 border-primary/30 flex-shrink-0">
             {{ player.name[0] }}
         </div>
         {% endif %}
-        <div>
+        <div class="flex-1">
             <div class="flex items-center gap-2 mb-1">
                 <span class="w-6 h-1 bg-primary rounded-full"></span>
                 <span class="font-headline font-bold uppercase tracking-[0.2em] text-[10px] text-primary">Player Profile</span>
@@ -21,17 +23,63 @@
             <h2 class="text-3xl font-headline font-black text-on-surface uppercase tracking-tight">{{ player.name }}</h2>
             <p class="text-sm text-on-surface-variant mt-1 font-medium">{{ player.team }} <span class="text-outline">•</span> {{ player.role }}</p>
         </div>
+        <!-- Share Card Button -->
+        <button onclick="generatePlayerCard()" class="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 bg-tertiary/10 border border-tertiary/30 hover:bg-tertiary/20 text-tertiary rounded-xl font-headline font-bold text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
+            <span class="material-symbols-outlined text-base">share</span>
+            <span class="hidden sm:inline">Share Card</span>
+        </button>
     </div>
 
-    <!-- Career Stats -->
-    <section class="bg-surface-container-low p-6 rounded-[1.5rem] shadow-xl mb-10">
-        <div class="flex items-center gap-3 mb-6">
-            <div class="bg-primary/10 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-primary">sports_cricket</span>
+    <!-- Trophy Cabinet -->
+    <section class="bg-surface-container-low p-6 rounded-[1.5rem] shadow-xl">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="bg-tertiary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-tertiary">emoji_events</span></div>
+            <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Trophy Cabinet</h3>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {% set fivefer = namespace(found=false) %}
+            {% for log in logs %}{% if log.wickets >= 5 %}{% set fivefer.found = true %}{% endif %}{% endfor %}
+
+            <!-- Centurion -->
+            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-tertiary/10 border-tertiary/40' if stats.hundreds > 0 else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
+                <div class="text-3xl mb-2">💯</div>
+                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-tertiary' if stats.hundreds > 0 else 'text-outline' }}">Centurion</div>
+                <div class="text-xs text-on-surface-variant mt-1">100+ in a match</div>
+                {% if stats.hundreds > 0 %}<div class="mt-1 text-[9px] font-black text-tertiary">× {{ stats.hundreds }}</div>{% endif %}
             </div>
+
+            <!-- Half-Century -->
+            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-primary/10 border-primary/40' if stats.fifties > 0 else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
+                <div class="text-3xl mb-2">🏏</div>
+                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-primary' if stats.fifties > 0 else 'text-outline' }}">Half-Century</div>
+                <div class="text-xs text-on-surface-variant mt-1">50+ in a match</div>
+                {% if stats.fifties > 0 %}<div class="mt-1 text-[9px] font-black text-primary">× {{ stats.fifties }}</div>{% endif %}
+            </div>
+
+            <!-- Five-For -->
+            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-secondary/10 border-secondary/40' if fivefer.found else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
+                <div class="text-3xl mb-2">⚡</div>
+                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-secondary' if fivefer.found else 'text-outline' }}">Five-For</div>
+                <div class="text-xs text-on-surface-variant mt-1">5 wickets in a match</div>
+                {% if fivefer.found %}<div class="mt-1 text-[9px] font-black text-secondary">Achieved!</div>{% endif %}
+            </div>
+
+            <!-- Golden Hands -->
+            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-error/10 border-error/40' if stats.catches >= 5 else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
+                <div class="text-3xl mb-2">🦅</div>
+                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-error' if stats.catches >= 5 else 'text-outline' }}">Golden Hands</div>
+                <div class="text-xs text-on-surface-variant mt-1">5+ career catches</div>
+                {% if stats.catches >= 5 %}<div class="mt-1 text-[9px] font-black text-error">{{ stats.catches }} catches!</div>{% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Career Stats -->
+    <section class="bg-surface-container-low p-6 rounded-[1.5rem] shadow-xl">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="bg-primary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-primary">sports_cricket</span></div>
             <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Career Statistics</h3>
         </div>
-
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-surface-container p-4 rounded-2xl text-center border border-outline-variant/10">
                 <div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-[0.15em] mb-1">Matches</div>
@@ -72,12 +120,33 @@
         </div>
     </section>
 
+    <!-- Analytics Charts -->
+    {% if logs|length > 1 %}
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Form Guide -->
+        <div class="bg-surface-container-low p-6 rounded-[1.5rem] shadow-xl">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="bg-primary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-primary">trending_up</span></div>
+                <h3 class="font-headline font-bold text-base uppercase tracking-wider">Form Guide</h3>
+                <span class="text-[9px] text-outline uppercase tracking-widest">(Last {{ [logs|length, 8]|min }} matches)</span>
+            </div>
+            <div class="relative h-52"><canvas id="formChart"></canvas></div>
+        </div>
+        <!-- Radar -->
+        <div class="bg-surface-container-low p-6 rounded-[1.5rem] shadow-xl">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="bg-secondary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-secondary">radar</span></div>
+                <h3 class="font-headline font-bold text-base uppercase tracking-wider">Player Radar</h3>
+            </div>
+            <div class="relative h-52"><canvas id="radarChart"></canvas></div>
+        </div>
+    </section>
+    {% endif %}
+
     <!-- Recent Performances -->
     <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden">
         <div class="px-6 py-5 border-b border-outline-variant/20 flex items-center gap-3">
-            <div class="bg-tertiary/10 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-tertiary">history</span>
-            </div>
+            <div class="bg-tertiary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-tertiary">history</span></div>
             <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Recent Performances</h3>
         </div>
         <div class="overflow-x-auto">
@@ -97,9 +166,9 @@
                             <div class="text-on-surface-variant text-xs">vs {{ log.opponent }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">
-                            <span class="font-headline font-black text-primary px-2 py-0.5 rounded bg-primary/10">{{ log.runs }}</span> / 
-                            <span>{{ log.balls_faced }}</span> / 
-                            <span class="text-tertiary">{{ log.fours }}x4</span> / 
+                            <span class="font-headline font-black text-primary px-2 py-0.5 rounded bg-primary/10">{{ log.runs }}</span> /
+                            <span>{{ log.balls_faced }}</span> /
+                            <span class="text-tertiary">{{ log.fours }}x4</span> /
                             <span class="text-secondary">{{ log.sixes }}x6</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">
@@ -116,4 +185,198 @@
         </div>
     </section>
 </div>
+
+<!-- Hidden Player Card Template (for html2canvas) -->
+<div id="player-card-template" class="fixed -left-[9999px] top-0 w-[340px] h-[480px] overflow-hidden" style="font-family: 'Lexend', sans-serif;">
+    <div style="width:340px;height:480px;background:linear-gradient(135deg,#0e0e0e 0%,#1a1a1a 100%);border-radius:24px;border:1px solid rgba(0,252,65,0.2);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:28px 24px;box-sizing:border-box;">
+        <!-- Glow BG -->
+        <div style="position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:300px;height:300px;background:radial-gradient(circle,rgba(0,252,65,0.15) 0%,transparent 70%);pointer-events:none;"></div>
+        <!-- Top Label -->
+        <div style="text-align:center;letter-spacing:6px;font-size:9px;font-weight:900;color:#00FC41;text-transform:uppercase;margin-bottom:16px;z-index:2;">SHC STATS · PLAYER CARD</div>
+        <!-- Player Image or Initial -->
+        {% set img_path = player.image_url if (player.image_url and player.image_url.startswith('/static/')) else player_image_url(player.name) %}
+        {% if img_path %}
+        <img src="{{ request.host_url.rstrip('/') }}{{ img_path }}" style="width:100px;height:100px;border-radius:20px;object-fit:cover;border:2px solid rgba(0,252,65,0.3);margin-bottom:14px;z-index:2;" crossorigin="anonymous">
+        {% else %}
+        <div style="width:100px;height:100px;border-radius:20px;background:rgba(0,252,65,0.1);border:2px solid rgba(0,252,65,0.3);display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;color:#9cff93;margin-bottom:14px;z-index:2;">{{ player.name[0] }}</div>
+        {% endif %}
+        <!-- Name + Role -->
+        <div style="font-size:26px;font-weight:900;color:#ffffff;text-transform:uppercase;letter-spacing:1px;text-align:center;z-index:2;">{{ player.name }}</div>
+        <div style="font-size:11px;color:#9cff93;letter-spacing:3px;text-transform:uppercase;margin-top:4px;margin-bottom:20px;z-index:2;">{{ player.role }} · {{ player.team }}</div>
+        <!-- Divider -->
+        <div style="width:80%;height:1px;background:linear-gradient(to right,transparent,rgba(0,252,65,0.4),transparent);margin-bottom:20px;z-index:2;"></div>
+        <!-- Stats Grid -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;z-index:2;">
+            <div style="background:rgba(0,252,65,0.06);border:1px solid rgba(0,252,65,0.15);border-radius:14px;padding:10px 6px;text-align:center;">
+                <div style="font-size:9px;color:#adaaaa;text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:4px;">Matches</div>
+                <div style="font-size:22px;font-weight:900;color:#ffffff;">{{ stats.matches | default(0) }}</div>
+            </div>
+            <div style="background:rgba(0,252,65,0.08);border:1px solid rgba(0,252,65,0.25);border-radius:14px;padding:10px 6px;text-align:center;">
+                <div style="font-size:9px;color:#9cff93;text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:4px;">Runs</div>
+                <div style="font-size:22px;font-weight:900;color:#9cff93;">{{ stats.runs | default(0) }}</div>
+            </div>
+            <div style="background:rgba(83,160,255,0.06);border:1px solid rgba(83,160,255,0.15);border-radius:14px;padding:10px 6px;text-align:center;">
+                <div style="font-size:9px;color:#53a0ff;text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:4px;">Wickets</div>
+                <div style="font-size:22px;font-weight:900;color:#53a0ff;">{{ stats.wickets | default(0) }}</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(72,72,71,0.4);border-radius:14px;padding:10px 6px;text-align:center;">
+                <div style="font-size:9px;color:#adaaaa;text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:4px;">Highest</div>
+                <div style="font-size:22px;font-weight:900;color:#ffffff;">{{ stats.highest_score | default(0) }}</div>
+            </div>
+            <div style="background:rgba(255,209,112,0.06);border:1px solid rgba(255,209,112,0.15);border-radius:14px;padding:10px 6px;text-align:center;">
+                <div style="font-size:9px;color:#ffd170;text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:4px;">Catches</div>
+                <div style="font-size:22px;font-weight:900;color:#ffd170;">{{ stats.catches | default(0) }}</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(72,72,71,0.4);border-radius:14px;padding:10px 6px;text-align:center;">
+                <div style="font-size:9px;color:#adaaaa;text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:4px;">Bat Avg</div>
+                <div style="font-size:22px;font-weight:900;color:#ffffff;">{% if stats.matches %}{{ "%.0f"|format(stats.runs / stats.matches) }}{% else %}0{% endif %}</div>
+            </div>
+        </div>
+        <!-- Bottom Tag -->
+        <div style="position:absolute;bottom:18px;font-size:8px;font-weight:900;color:rgba(255,255,255,0.2);letter-spacing:4px;text-transform:uppercase;z-index:2;">Sky High Cricket League</div>
+    </div>
+</div>
+
+<!-- Generate Card Toast -->
+<div id="card-toast" class="fixed bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 hidden z-[300] bg-surface-container border border-primary/30 px-6 py-3 rounded-2xl shadow-2xl text-primary font-headline font-bold text-sm uppercase tracking-widest flex items-center gap-3">
+    <span class="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+    Generating Card...
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+// --- Chart.js Setup ---
+Chart.defaults.color = '#adaaaa';
+Chart.defaults.borderColor = 'rgba(72,72,71,0.2)';
+Chart.defaults.font.family = 'Inter';
+
+// --- Form Guide Chart ---
+{% if logs|length > 1 %}
+const formLogs = {{ logs[-8:] | tojson }};
+const formLabels = formLogs.map((l, i) => l.opponent ? 'vs ' + l.opponent.substring(0,8) : 'M' + (i+1));
+const runsData = formLogs.map(l => l.runs || 0);
+const wicketsData = formLogs.map(l => l.wickets || 0);
+
+new Chart(document.getElementById('formChart'), {
+    type: 'line',
+    data: {
+        labels: formLabels,
+        datasets: [
+            {
+                label: 'Runs',
+                data: runsData,
+                borderColor: '#9cff93',
+                backgroundColor: 'rgba(156,255,147,0.08)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#9cff93',
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                yAxisID: 'y'
+            },
+            {
+                label: 'Wickets',
+                data: wicketsData,
+                borderColor: '#53a0ff',
+                backgroundColor: 'rgba(83,160,255,0.08)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#53a0ff',
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                yAxisID: 'y1'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'top', labels: { boxWidth: 8, usePointStyle: true, pointStyle: 'circle', padding: 16 } } },
+        scales: {
+            y: { type: 'linear', position: 'left', grid: { color: 'rgba(72,72,71,0.15)' }, ticks: { stepSize: 10 } },
+            y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { stepSize: 1, precision: 0 } }
+        }
+    }
+});
+
+// --- Radar Chart ---
+const totalRuns = {{ stats.runs | default(0) }};
+const totalWickets = {{ stats.wickets | default(0) }};
+const totalMatches = {{ stats.matches | default(1) or 1 }};
+const highest = {{ stats.highest_score | default(0) }};
+const totalCatches = {{ stats.catches | default(0) }};
+const totalFifties = {{ stats.fifties | default(0) }};
+
+// Normalise to 0-100 scale relative to reasonable max values
+function norm(val, max) { return Math.min(100, Math.round((val / max) * 100)); }
+
+new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+        labels: ['Runs/Match', 'Highest Score', 'Wickets/Match', 'Fifties', 'Catches', 'Consistency'],
+        datasets: [{
+            label: '{{ player.name }}',
+            data: [
+                norm(totalRuns / totalMatches, 60),
+                norm(highest, 150),
+                norm(totalWickets / totalMatches * 10, 10),
+                norm(totalFifties, 10),
+                norm(totalCatches, 15),
+                norm(totalMatches, 30)
+            ],
+            borderColor: '#9cff93',
+            backgroundColor: 'rgba(156,255,147,0.1)',
+            pointBackgroundColor: '#9cff93',
+            pointHoverBackgroundColor: '#00FC41',
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            r: {
+                min: 0, max: 100,
+                grid: { color: 'rgba(72,72,71,0.25)' },
+                angleLines: { color: 'rgba(72,72,71,0.25)' },
+                pointLabels: { font: { size: 10, weight: '700' }, color: '#adaaaa' },
+                ticks: { display: false }
+            }
+        }
+    }
+});
+{% endif %}
+
+// --- Player Card Generation ---
+async function generatePlayerCard() {
+    const toast = document.getElementById('card-toast');
+    toast.classList.remove('hidden');
+    
+    const cardEl = document.getElementById('player-card-template');
+    
+    try {
+        const canvas = await html2canvas(cardEl.firstElementChild, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: null,
+            logging: false
+        });
+        
+        const link = document.createElement('a');
+        link.download = '{{ player.name | replace(" ", "_") }}_SHC_Card.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    } catch(e) {
+        console.error('Card generation failed:', e);
+        alert('Card generation failed. Please try again.');
+    } finally {
+        toast.classList.add('hidden');
+    }
+}
+</script>
 {% endblock %}
