@@ -325,6 +325,39 @@
     </div>
 </div>
 
+<!-- Victory Celebration Overlay -->
+<div id="victory-overlay" class="fixed inset-0 bg-black/95 backdrop-blur-2xl hidden flex items-center justify-center z-[250] transition-all duration-1000 opacity-0">
+    <div class="text-center px-8 relative max-w-2xl w-full">
+        <!-- Kinetic Background Pulse -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] animate-pulse"></div>
+        
+        <div class="relative z-10 scale-90 opacity-0 transition-all duration-700" id="victory-content">
+            <div class="mb-8 inline-block transform hover:rotate-12 transition-transform duration-500">
+                <span class="material-symbols-outlined text-9xl text-primary drop-shadow-[0_0_30px_rgba(0,252,65,0.6)]">emoji_events</span>
+            </div>
+            
+            <h2 class="text-7xl md:text-9xl font-headline font-black text-white uppercase tracking-tighter mb-4 italic drop-shadow-2xl">VICTORY</h2>
+            <div class="h-1.5 w-full bg-gradient-to-r from-transparent via-primary to-transparent mb-10 opacity-50"></div>
+            
+            <h3 id="winner-team-name" class="text-5xl md:text-7xl font-headline font-black text-primary uppercase tracking-widest mb-6 break-words px-4">TEAM NAME</h3>
+            <div class="inline-block px-8 py-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm mb-12">
+                <p id="winner-result-text" class="text-xl md:text-2xl font-headline font-black text-on-surface-variant uppercase tracking-[0.2em]">Result loading...</p>
+            </div>
+            
+            <div class="flex flex-col items-center gap-6">
+                <div class="flex items-center gap-4 text-white/40 text-[10px] font-black uppercase tracking-[0.5em]">
+                    <span>Archiving Match Data</span>
+                    <div class="flex gap-1.5">
+                        <div class="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                        <div class="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                        <div class="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Loading Overlay -->
 <div id="cricket-loader" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[200] flex flex-col items-center justify-center hidden">
     <div class="relative w-40 h-40 mt-10">
@@ -370,7 +403,6 @@
 
 @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-/* Cricket Loader Animations */
 @keyframes cricket-swing {
     0% { transform: rotate(35deg); }
     15% { transform: rotate(50deg); }
@@ -386,6 +418,15 @@
 }
 .animate-bat-swing { animation: cricket-swing 1.2s ease-in-out infinite; transform-origin: top center; }
 .animate-ball-pitch { animation: cricket-pitch 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite; }
+
+/* Victory Overlay Animations */
+@keyframes victory-zoom {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.animate-victory {
+    animation: victory-zoom 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -536,7 +577,11 @@
                     
                     if (data.match_won || CURRENT_INNINGS === 2) {
                         showToast('MATCH COMPLETED!', 'green');
-                        setTimeout(endMatch, 2000);
+                        // Automated Victory Celebration
+                        let winner = data.match_won ? (BATTING_TEAM === 'team_a' ? '{{ match.team_a_name }}' : '{{ match.team_b_name }}') : (BATTING_TEAM === 'team_a' ? '{{ match.team_b_name }}' : '{{ match.team_a_name }}');
+                        if (data.match_result && data.match_result.includes('Tied')) winner = "MATCH TIED";
+                        
+                        triggerVictory(winner, data.match_result || "MATCH COMPLETED");
                     } else {
                         // Show innings break overlay instead of auto-redirecting
                         showInningsBreak(data.match);
@@ -778,7 +823,7 @@
     window.addEventListener('DOMContentLoaded', () => {
         let maxBalls = TOTAL_OVERS * 6;
         let cBalls = BATTING_TEAM === 'team_a' ? {{ match.team_a_balls }} : {{ match.team_b_balls }};
-        if (cBalls >= maxBalls && '{{ match.status }}' !== 'completed') {
+        if ({{ 'true' if is_innings_over else 'false' }} && '{{ match.status }}' !== 'completed') {
             let sp = document.getElementById('scoring-panel');
             let op = document.getElementById('over-track-panel');
             if (sp) { sp.style.pointerEvents = 'none'; sp.style.opacity = '0.5'; }
@@ -790,10 +835,65 @@
                     balls: cBalls
                 });
             } else {
-                if (sp) sp.insertAdjacentHTML('beforebegin', '<button onclick="endMatch()" class="w-full py-5 bg-error text-[#4d0c00] font-headline object-center font-black uppercase tracking-widest text-xl rounded-xl mb-4 shadow-[0_0_20px_rgba(255,115,81,0.4)] animate-pulse hover:scale-[1.01] transition-all">WRAP UP MATCH</button>');
+                // Automated Victory if page reloads on finished match
+                triggerVictory("MATCH FINISHED", "{{ match.match_result or 'RESULT PENDING' }}");
             }
         }
     });
+
+    function triggerVictory(winnerName, resultText) {
+        const overlay = document.getElementById('victory-overlay');
+        const content = document.getElementById('victory-content');
+        const nameEl = document.getElementById('winner-team-name');
+        const resultEl = document.getElementById('winner-result-text');
+        
+        if (nameEl) nameEl.textContent = winnerName;
+        if (resultEl) resultEl.textContent = resultText;
+        
+        overlay.classList.remove('hidden');
+        setTimeout(() => { 
+            overlay.classList.add('opacity-100'); 
+            if (content) {
+                content.classList.remove('scale-90', 'opacity-0');
+                content.classList.add('animate-victory');
+            }
+        }, 50);
+
+        // Continuous high-intensity confetti
+        const duration = 6 * 1000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 45, spread: 360, ticks: 100, zIndex: 300, scalar: 1.2 };
+
+        const interval = setInterval(function() {
+            const timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) return clearInterval(interval);
+
+            const particleCount = 60 * (timeLeft / duration);
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random() * 0.4, y: Math.random() - 0.2 } }));
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random() * 0.4 + 0.6, y: Math.random() - 0.2 } }));
+        }, 300);
+
+        // Auto-finalize after 6 seconds of glory
+        setTimeout(silentEndMatch, 6000);
+    }
+
+    async function silentEndMatch() {
+        try {
+            let res = await fetch('/api/live-match/{{ match.id }}/end', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            if (res.ok) {
+                window.location.href = '/dashboard';
+            } else {
+                // Fallback to manual end if auto fails
+                let sp = document.getElementById('scoring-panel');
+                if (sp) sp.insertAdjacentHTML('beforebegin', '<button onclick="endMatch()" class="w-full py-5 bg-error text-[#4d0c00] font-headline font-black uppercase tracking-widest text-xl rounded-xl mb-4 shadow-[0_0_20px_rgba(255,115,81,0.4)] animate-pulse">WRAP UP MATCH (RETRY)</button>');
+            }
+        } catch(e) {
+            console.error("Silent end failed", e);
+        }
+    }
 
     function refreshDOM() { window.location.reload(); }
     
@@ -824,8 +924,7 @@
     }
 
     async function endMatch() {
-        if(!confirm("INITIATE MATCH END PROTOCOL?")) return;
-        
+        // Automatically display the winning animation instead of prompting
         showToast('TERMINATING MATCH...', 'blue');
         
         let res = await fetch('/api/live-match/{{ match.id }}/end', {
@@ -836,19 +935,17 @@
         if (res.ok) {
             let data = await res.json();
             
-            if (confetti) {
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#00E676', '#00B0FF', '#D500F9', '#FFD600']
-                });
+            // Extract winner from data.result
+            let resultText = data.result || "MATCH COMPLETED";
+            let winnerMatch = resultText.match(/^(.*?) won$/i);
+            let winner = winnerMatch ? winnerMatch[1].toUpperCase() : "MATCH COMPLETED";
+            
+            if (resultText.toLowerCase().includes('tied') || resultText.toLowerCase().includes('drawn')) {
+                winner = "MATCH TIED";
             }
             
-            setTimeout(() => {
-                alert("MATCH TERMINATED.\nRESULT: " + data.result.toUpperCase());
-                window.location.href = '/dashboard';
-            }, 1000);
+            // Trigger the automatic victory animation overlay
+            triggerVictory(winner, resultText);
         } else {
             showToast('TERMINATION FAILED', 'red');
         }

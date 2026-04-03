@@ -363,6 +363,17 @@ def live_scorecard(match_id):
     # Fetch recent balls for the "this over" tracker
     ball_logs = get_live_match_ball_logs(match_id)
     
+    # Calculate if current innings is over (for page-load buttons)
+    curr_balls = match[f'{batting_team}_balls']
+    curr_wickets = match[f'{batting_team}_wickets']
+    curr_score = match[f'{batting_team}_score']
+    max_balls = match.get('total_overs', 20) * 6
+    is_innings_over = (curr_balls >= max_balls) or (curr_wickets >= len(batting_players))
+    
+    if match['current_innings'] == 2 and match.get('target', 0) > 0:
+        if curr_score >= match['target']:
+            is_innings_over = True
+
     return render_template('live_scorecard.html', 
         match=match, 
         batting_team=batting_team, 
@@ -371,7 +382,8 @@ def live_scorecard(match_id):
         striker=striker,
         non_striker=non_striker,
         bowler=bowler,
-        ball_logs=ball_logs
+        ball_logs=ball_logs,
+        is_innings_over=is_innings_over
     )
 
 @app.route('/api/debug/live-match/<match_id>/players')
@@ -592,11 +604,20 @@ def update_score(match_id):
     else:
         resp_bowler_final = {"balls": bowler['balls_bowled'], "runs": bowler['runs_conceded'], "wickets": bowler['wickets_taken']}
 
+    match_result = ""
+    if is_innings_over and match['current_innings'] == 2:
+        s_a = current_score if team_prefix == 'team_a' else match.get('team_a_score', 0)
+        s_b = current_score if team_prefix == 'team_b' else match.get('team_b_score', 0)
+        if s_a > s_b: match_result = f"{match.get('team_a_name')} won"
+        elif s_b > s_a: match_result = f"{match.get('team_b_name')} won"
+        else: match_result = "Match Tied"
+
     return {
         "success": True,
         "end_of_over": (is_legal_ball and current_balls > 0 and current_balls % 6 == 0 and not is_innings_over),
         "innings_over": is_innings_over,
         "match_won": match_won,
+        "match_result": match_result,
         "is_wicket": (event_type == 'wicket'),
         "odd_runs": (event_type == 'run' and runs % 2 != 0),
         "striker": resp_striker,
