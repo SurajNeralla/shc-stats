@@ -121,6 +121,7 @@
                     ('Highest', stats.highest_score|default(0), 'on-surface'),
                     ('50s / 30s', (stats.fifties|default(0))|string + ' / ' + (stats.thirties|default(0))|string, 'on-surface'),
                     ('4s / 6s', (stats.fours|default(0))|string + ' / ' + (stats.sixes|default(0))|string, 'on-surface'),
+                    ('1s / 2s', (stats.ones|default(0))|string + ' / ' + (stats.twos|default(0))|string, 'on-surface'),
                     ('Wickets', stats.wickets|default(0), 'secondary'),
                     ('Overs', stats.overs_bowled|default(0), 'on-surface'),
                     ('3W / 5W', (stats.three_wkt_hauls|default(0))|string + ' / ' + (stats.five_fives|default(0))|string, 'secondary'),
@@ -176,7 +177,7 @@
                 <thead>
                     <tr class="border-b border-outline-variant/20">
                         <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Date / Opponent</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Batting (R/B/4s/6s)</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Batting (R/B/1s/2s/4s/6s)</th>
                         <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Bowling (O/M/R/W)</th>
                         <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Actions</th>
                     </tr>
@@ -191,6 +192,8 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">
                             <span class="font-headline font-black text-primary px-2 py-0.5 rounded bg-primary/10">{{ log.runs }}</span> / 
                             <span>{{ log.balls_faced }}</span> / 
+                            <span class="text-on-surface-variant">{{ log.ones }}x1</span> / 
+                            <span class="text-on-surface-variant">{{ log.twos }}x2</span> / 
                             <span class="text-tertiary">{{ log.fours }}x4</span> / 
                             <span class="text-secondary">{{ log.sixes }}x6</span>
                         </td>

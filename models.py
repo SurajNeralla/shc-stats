@@ -54,6 +54,9 @@ def recalculate_player_stats(player_id):
     hundreds = 0
     highest_score = 0
     
+    ones = 0
+    twos = 0
+    
     innings_batted = 0
     not_outs = 0
     
@@ -73,6 +76,8 @@ def recalculate_player_stats(player_id):
         runs += score
         balls_f = l.get('balls_faced', 0)
         balls_faced += balls_f
+        ones += l.get('ones', 0)
+        twos += l.get('twos', 0)
         fours += l.get('fours', 0)
         sixes += l.get('sixes', 0)
         
@@ -135,6 +140,8 @@ def recalculate_player_stats(player_id):
         "thirties": thirties,
         "hundreds": hundreds,
         "highest_score": highest_score,
+        "ones": ones,
+        "twos": twos,
         "overs_bowled": calculated_overs,
         "maidens": maidens,
         "runs_conceded": runs_conceded,
@@ -204,7 +211,7 @@ def sync_player_career_stats(lmp_record):
         log_data = {
             'player_id': lmp_record['player_id'],
             'opponent': 'Live Match',
-            'runs': 0, 'balls_faced': 0, 'fours': 0, 'sixes': 0, 'not_out': False,
+            'runs': 0, 'balls_faced': 0, 'ones': 0, 'twos': 0, 'fours': 0, 'sixes': 0, 'not_out': False,
             'overs_bowled': 0, 'maidens': 0, 'runs_conceded': 0, 'wickets': 0, 'no_balls': 0, 'wides': 0
         }
         res = supabase.table("match_logs").insert(log_data).execute()
@@ -226,6 +233,8 @@ def sync_player_career_stats(lmp_record):
         'not_out': is_not_out,
         'runs': lmp_record.get('runs_scored', 0),
         'balls_faced': lmp_record.get('balls_faced', 0),
+        'ones': lmp_record.get('ones', 0),
+        'twos': lmp_record.get('twos', 0),
         'fours': lmp_record.get('fours', 0),
         'sixes': lmp_record.get('sixes', 0),
         'overs_bowled': overs_b,
@@ -285,12 +294,16 @@ def undo_last_ball(match_id):
     s_runs = striker_lmp['runs_scored'] - ball.get('runs', 0)
     s_balls = striker_lmp['balls_faced'] - (0 if ball.get('extra_type') == 'wide' else 1)
     if ball.get('extra_type') == 'no-ball' and ball.get('runs', 0) == 0: s_balls += 1 # We didn't add a ball if it was a no-ball with 0 runs
+    s_ones = striker_lmp.get('ones', 0) - (1 if ball.get('runs') == 1 else 0)
+    s_twos = striker_lmp.get('twos', 0) - (1 if ball.get('runs') == 2 else 0)
     s_fours = striker_lmp['fours'] - (1 if ball.get('runs') == 4 else 0)
     s_sixes = striker_lmp['sixes'] - (1 if ball.get('runs') == 6 else 0)
     
     update_live_match_player(striker_lmp['id'], {
         'runs_scored': max(0, s_runs),
         'balls_faced': max(0, s_balls),
+        'ones': max(0, s_ones),
+        'twos': max(0, s_twos),
         'fours': max(0, s_fours),
         'sixes': max(0, s_sixes),
         'status': 'batting' if ball.get('is_wicket') else striker_lmp['status'],
@@ -317,7 +330,9 @@ def undo_last_ball(match_id):
             update_live_match_player(ns_lmp['id'], {'is_striker': False, 'is_non_striker': True})
             
     # Re-sync
-    striker_lmp.update({'runs_scored': max(0, s_runs), 'balls_faced': max(0, s_balls), 'fours': max(0, s_fours), 'sixes': max(0, s_sixes)})
+    striker_lmp.update({'runs_scored': max(0, s_runs), 'balls_faced': max(0, s_balls), 
+                       'ones': max(0, s_ones), 'twos': max(0, s_twos), 
+                       'fours': max(0, s_fours), 'sixes': max(0, s_sixes)})
     sync_player_career_stats(striker_lmp)
     # Recalculate manually for undo to keep it consistent if needed, but we deferred it above. 
     # For undo, we can do it because it's rare.

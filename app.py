@@ -201,6 +201,8 @@ def add_match(player_id):
             'not_out': request.form.get('not_out') == 'on',
             'runs': int(request.form.get('runs', 0)),
             'balls_faced': int(request.form.get('balls_faced', 0)),
+            'ones': int(request.form.get('ones', 0)),
+            'twos': int(request.form.get('twos', 0)),
             'fours': int(request.form.get('fours', 0)),
             'sixes': int(request.form.get('sixes', 0)),
             'overs_bowled': float(request.form.get('overs_bowled', 0)),
@@ -518,9 +520,13 @@ def update_score(match_id):
         # Batch-update striker in one call
         s_runs = striker['runs_scored'] + runs
         s_balls = striker['balls_faced'] + 1
+        s_ones = striker.get('ones', 0) + (1 if runs == 1 else 0)
+        s_twos = striker.get('twos', 0) + (2 if runs == 2 else 0) # Wait, it's NOT (2 if runs == 2), it's (1 if runs == 2) because we are counting the NUMBER of 2s.
+        # User said "no. of 1,2,4,6", so it's a count.
+        s_twos = striker.get('twos', 0) + (1 if runs == 2 else 0)
         s_fours = striker['fours'] + (1 if runs == 4 else 0)
         s_sixes = striker['sixes'] + (1 if runs == 6 else 0)
-        striker_update = {'runs_scored': s_runs, 'balls_faced': s_balls, 'fours': s_fours, 'sixes': s_sixes}
+        striker_update = {'runs_scored': s_runs, 'balls_faced': s_balls, 'ones': s_ones, 'twos': s_twos, 'fours': s_fours, 'sixes': s_sixes}
         
         # Odd runs swap — fold into same update
         if runs % 2 != 0 and non_striker:
@@ -573,7 +579,17 @@ def update_score(match_id):
         # No-ball with bat runs: credit to striker (no extra ball faced)
         if runs > 0 and extra_type == 'no-ball' and striker:
             s_runs = striker['runs_scored'] + runs
-            update_live_match_player(striker['id'], {'runs_scored': s_runs})
+            s_ones = striker.get('ones', 0) + (1 if runs == 1 else 0)
+            s_twos = striker.get('twos', 0) + (1 if runs == 2 else 0)
+            s_fours = striker.get('fours', 0) + (1 if runs == 4 else 0)
+            s_sixes = striker.get('sixes', 0) + (1 if runs == 6 else 0)
+            update_live_match_player(striker['id'], {
+                'runs_scored': s_runs,
+                'ones': s_ones,
+                'twos': s_twos,
+                'fours': s_fours,
+                'sixes': s_sixes
+            })
         # Career stats deferred to match end — no per-ball sync
 
     elif event_type == 'wicket':
