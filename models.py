@@ -54,6 +54,9 @@ def recalculate_player_stats(player_id):
     hundreds = 0
     highest_score = 0
     
+    innings_batted = 0
+    not_outs = 0
+    
     overs_bowled = 0.0
     maidens = 0
     runs_conceded = 0
@@ -68,9 +71,16 @@ def recalculate_player_stats(player_id):
     for l in logs:
         score = l.get('runs', 0)
         runs += score
-        balls_faced += l.get('balls_faced', 0)
+        balls_f = l.get('balls_faced', 0)
+        balls_faced += balls_f
         fours += l.get('fours', 0)
         sixes += l.get('sixes', 0)
+        
+        is_not_out = l.get('not_out', False)
+        if balls_f > 0 or score > 0 or is_not_out:
+            innings_batted += 1
+            if is_not_out:
+                not_outs += 1
         
         if score > highest_score:
             highest_score = score
@@ -110,8 +120,13 @@ def recalculate_player_stats(player_id):
     final_rem_balls = total_balls % 6
     calculated_overs = final_full_overs + (final_rem_balls / 10.0)
 
+    dismissals = innings_batted - not_outs
+
     stats_data = {
         "matches": matches,
+        "innings_batted": innings_batted,
+        "not_outs": not_outs,
+        "dismissals": dismissals,
         "runs": runs,
         "balls_faced": balls_faced,
         "fours": fours,
@@ -189,7 +204,7 @@ def sync_player_career_stats(lmp_record):
         log_data = {
             'player_id': lmp_record['player_id'],
             'opponent': 'Live Match',
-            'runs': 0, 'balls_faced': 0, 'fours': 0, 'sixes': 0,
+            'runs': 0, 'balls_faced': 0, 'fours': 0, 'sixes': 0, 'not_out': False,
             'overs_bowled': 0, 'maidens': 0, 'runs_conceded': 0, 'wickets': 0, 'no_balls': 0, 'wides': 0
         }
         res = supabase.table("match_logs").insert(log_data).execute()
@@ -202,7 +217,13 @@ def sync_player_career_stats(lmp_record):
     balls = lmp_record.get('balls_bowled', 0)
     overs_b = (balls // 6) + ((balls % 6) / 10.0)
 
+    is_not_out = False
+    status = lmp_record.get('status')
+    if status == 'batting' and (lmp_record.get('balls_faced', 0) > 0 or lmp_record.get('runs_scored', 0) > 0 or lmp_record.get('is_striker') or lmp_record.get('is_non_striker')):
+        is_not_out = True
+
     sync_data = {
+        'not_out': is_not_out,
         'runs': lmp_record.get('runs_scored', 0),
         'balls_faced': lmp_record.get('balls_faced', 0),
         'fours': lmp_record.get('fours', 0),

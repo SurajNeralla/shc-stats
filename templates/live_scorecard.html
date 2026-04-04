@@ -74,7 +74,7 @@
                         <div class="flex items-center gap-2 flex-wrap">
                             <span id="striker-name" class="text-lg font-headline font-black text-on-surface uppercase tracking-wide">{{ striker.players.name if striker else '' }}</span>
                             <span class="text-[8px] font-black text-[#006413] bg-primary px-2 py-0.5 rounded uppercase tracking-widest">STRIKER</span>
-                            {% if match.status != 'completed' %}
+                            {% if match.status != 'completed' and is_admin %}
                             <button onclick="openBatterModal('striker')" title="Change Striker" class="change-role-btn flex items-center gap-1 px-2 py-0.5 rounded-lg bg-primary/20 border border-primary/40 hover:bg-primary/40 text-primary transition-all text-[9px] font-black uppercase tracking-widest">
                                 <span class="material-symbols-outlined" style="font-size:11px">edit</span> CHANGE
                             </button>
@@ -84,7 +84,7 @@
                     </div>
                     <div class="text-3xl font-headline font-black text-on-surface" id="striker-score">{{ striker.runs_scored if striker else 0 }}<span class="text-sm font-normal text-on-surface-variant font-body ml-1">({{ striker.balls_faced if striker else 0 }})</span></div>
                 </div>
-                {% if match.status != 'completed' %}
+                {% if match.status != 'completed' and is_admin %}
                 <button id="select-striker-btn" onclick="openBatterModal('striker')" class="w-full py-4 border-2 border-dashed border-primary/30 hover:border-primary/60 text-primary font-bold text-xs uppercase tracking-widest bg-primary/5 hover:bg-primary/10 rounded-xl transition-all mb-4 {% if striker %}hidden{% endif %}">
                     + SELECT STRIKER
                 </button>
@@ -95,7 +95,7 @@
                     <div>
                         <div class="flex items-center gap-2 flex-wrap">
                             <span id="nonstriker-name" class="text-sm font-headline font-bold text-on-surface-variant uppercase tracking-wide">{{ non_striker.players.name if non_striker else '' }}</span>
-                            {% if match.status != 'completed' %}
+                            {% if match.status != 'completed' and is_admin %}
                             <button onclick="openBatterModal('non_striker')" title="Change Non-Striker" class="change-role-btn flex items-center gap-1 px-2 py-0.5 rounded-lg bg-outline-variant/20 border border-outline-variant/40 hover:bg-outline-variant/40 text-on-surface-variant transition-all text-[9px] font-black uppercase tracking-widest">
                                 <span class="material-symbols-outlined" style="font-size:11px">edit</span> CHANGE
                             </button>
@@ -105,7 +105,7 @@
                     </div>
                     <div class="text-2xl font-headline font-black text-on-surface-variant" id="nonstriker-score">{{ non_striker.runs_scored if non_striker else 0 }}<span class="text-xs font-normal text-outline font-body ml-1">({{ non_striker.balls_faced if non_striker else 0 }})</span></div>
                 </div>
-                {% if match.status != 'completed' %}
+                {% if match.status != 'completed' and is_admin %}
                 <button id="select-nonstriker-btn" onclick="openBatterModal('non_striker')" class="w-full py-4 border-2 border-dashed border-outline-variant/30 hover:border-outline-variant/60 text-on-surface-variant font-bold text-xs uppercase tracking-widest bg-surface hover:bg-surface-bright rounded-xl transition-all {% if non_striker %}hidden{% endif %}">
                     + SELECT NON-STRIKER
                 </button>
@@ -129,7 +129,7 @@
                     <div id="bowler-row" class="bg-secondary/10 border border-secondary/30 p-5 rounded-xl {% if not bowler %}hidden{% endif %}">
                         <div class="flex items-center gap-2 flex-wrap mb-1">
                             <span id="bowler-name" data-name="{{ bowler.players.name if bowler else '' }}" class="text-xl font-headline font-black text-on-surface uppercase tracking-wide">{{ bowler.players.name if bowler else '' }}</span>
-                            {% if match.status != 'completed' %}
+                            {% if match.status != 'completed' and is_admin %}
                             <button onclick="openChangeBowlerModal()" title="Change Bowler" class="change-role-btn flex items-center gap-1 px-2 py-0.5 rounded-lg bg-secondary/20 border border-secondary/40 hover:bg-secondary/40 text-secondary transition-all text-[9px] font-black uppercase tracking-widest">
                                 <span class="material-symbols-outlined" style="font-size:11px">edit</span> CHANGE
                             </button>
@@ -144,7 +144,7 @@
                         </div>
                         {% endif %}
                     </div>
-                    {% if match.status != 'completed' %}
+                    {% if match.status != 'completed' and is_admin %}
                     <button id="select-bowler-btn" onclick="openModal('bowlerModal')" class="w-full py-5 border-2 border-dashed border-secondary/30 hover:border-secondary/60 text-secondary font-bold text-sm uppercase tracking-widest bg-secondary/5 hover:bg-secondary/10 rounded-xl transition-all shadow-sm {% if bowler %}hidden{% endif %}">
                         + ASSIGN BOWLER
                     </button>
@@ -169,6 +169,7 @@
         </div>
     </div>
     <!-- Scoring Engine Controls -->
+    {% if is_admin %}
     <div id="scoring-panel" class="bg-[#1e002e] border border-tertiary/30 rounded-[1.5rem] p-8 shadow-[0_0_30px_rgba(255,209,112,0.1)] relative overflow-hidden mt-4 transition-all">
         <div class="absolute inset-0 bg-gradient-to-r from-tertiary/10 to-transparent pointer-events-none"></div>
 
@@ -210,20 +211,223 @@
             </button>
         </div>
     </div>
+    {% endif %}
     {% else %}
-    <!-- Match Completed State -->
-    <div class="bg-surface-container-low p-8 text-center rounded-[1.5rem] mt-8 border border-outline-variant/20 shadow-xl relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent pointer-events-none"></div>
-        <div class="relative z-10">
-            <h4 class="text-3xl font-headline font-black text-primary uppercase tracking-[0.3em] mb-4">Match Concluded</h4>
-            <div class="inline-block px-6 py-3 bg-surface border border-outline-variant/30 rounded-xl shadow-lg">
-                <p class="text-on-surface text-lg font-bold uppercase tracking-widest text-shadow">{{ match.match_result }}</p>
+    <!-- Match Completed Scorecard -->
+    <div class="mt-8">
+        <h4 class="text-3xl font-headline font-black text-primary uppercase tracking-[0.3em] mb-4 text-center">Scorecard</h4>
+        <div class="inline-block px-6 py-3 bg-surface border border-outline-variant/30 rounded-xl shadow-lg mb-8 mx-auto block w-max">
+            <p class="text-on-surface text-lg font-bold uppercase tracking-widest text-shadow">{{ match.match_result }}</p>
+        </div>
+
+        {% if awards %}
+        <!-- Awards Block -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <!-- MOTM -->
+            <div class="bg-gradient-to-br from-[#ffd170]/20 to-transparent border border-tertiary/40 rounded-[1.5rem] p-6 text-center transform hover:-translate-y-1 transition-all shadow-[0_10px_30px_rgba(255,209,112,0.1)]">
+                <div class="text-5xl mb-4">🏆</div>
+                <div class="text-[10px] font-black uppercase tracking-[0.2em] text-tertiary mb-2">Man of the Match</div>
+                <div class="text-xl font-headline font-black text-on-surface uppercase">{{ awards.motm.players.name if awards.motm else '-' }}</div>
             </div>
-            <div class="mt-8 flex justify-center gap-4">
-                <a href="{{ url_for('match_history') }}" class="px-6 py-3 bg-surface hover:bg-surface-bright text-on-surface-variant border border-outline-variant rounded-xl font-bold uppercase tracking-widest text-xs transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">arrow_back</span> Return to Archive
-                </a>
+            <!-- Best Batter -->
+            <div class="bg-gradient-to-br from-primary/10 to-transparent border border-primary/30 rounded-[1.5rem] p-6 text-center transform hover:-translate-y-1 transition-all shadow-[0_10px_30px_rgba(0,252,65,0.05)]">
+                <div class="text-5xl mb-4">🏏</div>
+                <div class="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-2">Best Batsman</div>
+                <div class="text-xl font-headline font-black text-on-surface uppercase">{{ awards.best_batsman.players.name if awards.best_batsman else '-' }}</div>
             </div>
+            <!-- Best Bowler -->
+            <div class="bg-gradient-to-br from-secondary/10 to-transparent border border-secondary/30 rounded-[1.5rem] p-6 text-center transform hover:-translate-y-1 transition-all shadow-[0_10px_30px_rgba(83,160,255,0.05)]">
+                <div class="text-5xl mb-4">⚡</div>
+                <div class="text-[10px] font-black uppercase tracking-[0.2em] text-secondary mb-2">Best Bowler</div>
+                <div class="text-xl font-headline font-black text-on-surface uppercase">{{ awards.best_bowler.players.name if awards.best_bowler else '-' }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Tab Controls -->
+        <div class="flex items-center justify-center gap-4 mb-8">
+            <button onclick="document.getElementById('innings1-card').classList.remove('hidden'); document.getElementById('innings2-card').classList.add('hidden');" class="px-6 py-3 bg-surface hover:bg-surface-bright text-on-surface border border-outline-variant/30 rounded-xl font-bold uppercase tracking-widest text-xs transition-all focus:ring focus:ring-primary/50">
+                Innings 1: {{ match.team_a_name if innings_1_team == 'team_a' else match.team_b_name }}
+            </button>
+            <button onclick="document.getElementById('innings2-card').classList.remove('hidden'); document.getElementById('innings1-card').classList.add('hidden');" class="px-6 py-3 bg-surface hover:bg-surface-bright text-on-surface border border-outline-variant/30 rounded-xl font-bold uppercase tracking-widest text-xs transition-all focus:ring focus:ring-secondary/50">
+                Innings 2: {{ match.team_a_name if innings_2_team == 'team_a' else match.team_b_name }}
+            </button>
+        </div>
+
+        <!-- Innings 1 Card -->
+        {% set inn1_batting_players = team_a_players if innings_1_team == 'team_a' else team_b_players %}
+        {% set inn1_bowling_players = team_b_players if innings_1_team == 'team_a' else team_a_players %}
+        <div id="innings1-card" class="mb-12">
+            <!-- Batting Table -->
+            <div class="bg-surface-container-low rounded-[1.5rem] border border-outline-variant/20 overflow-hidden mb-6 shadow-xl">
+                 <div class="px-6 py-4 bg-primary/10 border-b border-primary/20 flex justify-between items-center">
+                     <h3 class="font-headline font-black text-primary uppercase tracking-[0.2em]">Innings 1 - Batting</h3>
+                     <span class="font-headline font-black text-on-surface">{{ match.team_a_score if innings_1_team == 'team_a' else match.team_b_score }}/{{ match.team_a_wickets if innings_1_team == 'team_a' else match.team_b_wickets }} <span class="text-xs text-on-surface-variant font-bold ml-2">({{ match.team_a_balls//6 if innings_1_team == 'team_a' else match.team_b_balls//6 }}.{{ match.team_a_balls%6 if innings_1_team == 'team_a' else match.team_b_balls%6 }} OV)</span></span>
+                 </div>
+                 <div class="overflow-x-auto w-full">
+                     <table class="min-w-full">
+                         <thead class="bg-surface border-b border-outline-variant/20">
+                             <tr>
+                                 <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Batter</th>
+                                 <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Status</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">R</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">B</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">4s</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">6s</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">SR</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             {% for p in inn1_batting_players %}
+                             {% if p.status in ('out', 'batting') or p.balls_faced > 0 %}
+                             <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors">
+                                 <td class="px-6 py-4 font-headline font-bold text-on-surface uppercase">{{ p.players.name }}</td>
+                                 <td class="px-6 py-4 text-xs font-bold {% if p.status == 'batting' %}text-primary{% else %}text-error{% endif %} uppercase tracking-wider">
+                                     {% if p.status == 'batting' %}Not Out{% else %}Out{% endif %}
+                                 </td>
+                                 <td class="px-6 py-4 text-right font-headline font-black text-on-surface">{{ p.runs_scored }}</td>
+                                 <td class="px-6 py-4 text-right font-bold text-on-surface-variant">{{ p.balls_faced }}</td>
+                                 <td class="px-6 py-4 text-right text-sm text-secondary">{{ p.fours_hit }}</td>
+                                 <td class="px-6 py-4 text-right text-sm text-primary">{{ p.sixes_hit }}</td>
+                                 <td class="px-6 py-4 text-right font-bold text-outline">
+                                     {% if p.balls_faced %}{{ "%.1f"|format((p.runs_scored / p.balls_faced) * 100) }}{% else %}0.0{% endif %}
+                                 </td>
+                             </tr>
+                             {% endif %}
+                             {% endfor %}
+                         </tbody>
+                     </table>
+                 </div>
+            </div>
+
+            <!-- Bowling Table -->
+            <div class="bg-surface-container-low rounded-[1.5rem] border border-outline-variant/20 overflow-hidden shadow-xl">
+                 <div class="px-6 py-4 bg-secondary/10 border-b border-secondary/20 flex justify-between items-center">
+                     <h3 class="font-headline font-black text-secondary uppercase tracking-[0.2em]">Innings 1 - Bowling</h3>
+                 </div>
+                 <div class="overflow-x-auto w-full">
+                     <table class="min-w-full">
+                         <thead class="bg-surface border-b border-outline-variant/20">
+                             <tr>
+                                 <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Bowler</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Overs</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Maidens</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Runs</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Wickets</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Econ</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             {% for p in inn1_bowling_players %}
+                             {% if p.balls_bowled > 0 %}
+                             <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors">
+                                 <td class="px-6 py-4 font-headline font-bold text-on-surface uppercase">{{ p.players.name }}</td>
+                                 <td class="px-6 py-4 text-right font-bold text-on-surface-variant">{{ p.balls_bowled // 6 }}.{{ p.balls_bowled % 6 }}</td>
+                                 <td class="px-6 py-4 text-right font-bold text-outline">{{ p.maidens_bowled }}</td>
+                                 <td class="px-6 py-4 text-right font-headline font-black text-on-surface">{{ p.runs_conceded }}</td>
+                                 <td class="px-6 py-4 text-right font-headline font-black text-secondary">{{ p.wickets_taken }}</td>
+                                 <td class="px-6 py-4 text-right font-bold text-outline">
+                                     {% set overs_b = (p.balls_bowled // 6) + ((p.balls_bowled % 6) / 6.0) %}
+                                     {% if overs_b > 0 %}{{ "%.1f"|format(p.runs_conceded / overs_b) }}{% else %}0.0{% endif %}
+                                 </td>
+                             </tr>
+                             {% endif %}
+                             {% endfor %}
+                         </tbody>
+                     </table>
+                 </div>
+            </div>
+        </div>
+
+        <!-- Innings 2 Card -->
+        {% set inn2_batting_players = team_a_players if innings_2_team == 'team_a' else team_b_players %}
+        {% set inn2_bowling_players = team_b_players if innings_2_team == 'team_a' else team_a_players %}
+        <div id="innings2-card" class="mb-12 hidden">
+            <!-- Batting Table -->
+            <div class="bg-surface-container-low rounded-[1.5rem] border border-outline-variant/20 overflow-hidden mb-6 shadow-xl">
+                 <div class="px-6 py-4 bg-primary/10 border-b border-primary/20 flex justify-between items-center">
+                     <h3 class="font-headline font-black text-primary uppercase tracking-[0.2em]">Innings 2 - Batting</h3>
+                     <span class="font-headline font-black text-on-surface">{{ match.team_a_score if innings_2_team == 'team_a' else match.team_b_score }}/{{ match.team_a_wickets if innings_2_team == 'team_a' else match.team_b_wickets }} <span class="text-xs text-on-surface-variant font-bold ml-2">({{ match.team_a_balls//6 if innings_2_team == 'team_a' else match.team_b_balls//6 }}.{{ match.team_a_balls%6 if innings_2_team == 'team_a' else match.team_b_balls%6 }} OV)</span></span>
+                 </div>
+                 <div class="overflow-x-auto w-full">
+                     <table class="min-w-full">
+                         <thead class="bg-surface border-b border-outline-variant/20">
+                             <tr>
+                                 <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Batter</th>
+                                 <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Status</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">R</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">B</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">4s</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">6s</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">SR</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             {% for p in inn2_batting_players %}
+                             {% if p.status in ('out', 'batting') or p.balls_faced > 0 %}
+                             <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors">
+                                 <td class="px-6 py-4 font-headline font-bold text-on-surface uppercase">{{ p.players.name }}</td>
+                                 <td class="px-6 py-4 text-xs font-bold {% if p.status == 'batting' %}text-primary{% else %}text-error{% endif %} uppercase tracking-wider">
+                                     {% if p.status == 'batting' %}Not Out{% else %}Out{% endif %}
+                                 </td>
+                                 <td class="px-6 py-4 text-right font-headline font-black text-on-surface">{{ p.runs_scored }}</td>
+                                 <td class="px-6 py-4 text-right font-bold text-on-surface-variant">{{ p.balls_faced }}</td>
+                                 <td class="px-6 py-4 text-right text-sm text-secondary">{{ p.fours_hit }}</td>
+                                 <td class="px-6 py-4 text-right text-sm text-primary">{{ p.sixes_hit }}</td>
+                                 <td class="px-6 py-4 text-right font-bold text-outline">
+                                     {% if p.balls_faced %}{{ "%.1f"|format((p.runs_scored / p.balls_faced) * 100) }}{% else %}0.0{% endif %}
+                                 </td>
+                             </tr>
+                             {% endif %}
+                             {% endfor %}
+                         </tbody>
+                     </table>
+                 </div>
+            </div>
+
+            <!-- Bowling Table -->
+            <div class="bg-surface-container-low rounded-[1.5rem] border border-outline-variant/20 overflow-hidden shadow-xl">
+                 <div class="px-6 py-4 bg-secondary/10 border-b border-secondary/20 flex justify-between items-center">
+                     <h3 class="font-headline font-black text-secondary uppercase tracking-[0.2em]">Innings 2 - Bowling</h3>
+                 </div>
+                 <div class="overflow-x-auto w-full">
+                     <table class="min-w-full">
+                         <thead class="bg-surface border-b border-outline-variant/20">
+                             <tr>
+                                 <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Bowler</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Overs</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Maidens</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Runs</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Wickets</th>
+                                 <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Econ</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             {% for p in inn2_bowling_players %}
+                             {% if p.balls_bowled > 0 %}
+                             <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors">
+                                 <td class="px-6 py-4 font-headline font-bold text-on-surface uppercase">{{ p.players.name }}</td>
+                                 <td class="px-6 py-4 text-right font-bold text-on-surface-variant">{{ p.balls_bowled // 6 }}.{{ p.balls_bowled % 6 }}</td>
+                                 <td class="px-6 py-4 text-right font-bold text-outline">{{ p.maidens_bowled }}</td>
+                                 <td class="px-6 py-4 text-right font-headline font-black text-on-surface">{{ p.runs_conceded }}</td>
+                                 <td class="px-6 py-4 text-right font-headline font-black text-secondary">{{ p.wickets_taken }}</td>
+                                 <td class="px-6 py-4 text-right font-bold text-outline">
+                                     {% set overs_b = (p.balls_bowled // 6) + ((p.balls_bowled % 6) / 6.0) %}
+                                     {% if overs_b > 0 %}{{ "%.1f"|format(p.runs_conceded / overs_b) }}{% else %}0.0{% endif %}
+                                 </td>
+                             </tr>
+                             {% endif %}
+                             {% endfor %}
+                         </tbody>
+                     </table>
+                 </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 flex justify-center gap-4">
+            <a href="{{ url_for('match_history') }}" class="px-6 py-3 bg-surface hover:bg-surface-bright text-on-surface-variant border border-outline-variant rounded-xl font-bold uppercase tracking-widest text-xs transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">arrow_back</span> Return to Archive
+            </a>
         </div>
     </div>
     {% endif %}

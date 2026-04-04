@@ -27,7 +27,7 @@
                     <tr class="border-b border-outline-variant/20">
                         <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] w-16">Rank</th>
                         <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Player</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">M</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Inn</th>
                         <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Runs</th>
                         <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">HS</th>
                         <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">SR</th>
@@ -60,14 +60,14 @@
                                 <span class="font-headline font-bold uppercase text-sm {% if logged_in_player_id == l.player_id %}text-on-surface tracking-wider{% else %}text-primary{% endif %}">{{ l.players.name }} {% if logged_in_player_id == l.player_id %}(YOU){% endif %}</span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.matches }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.innings_batted | default(l.matches) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-headline font-black text-on-surface">{{ l.runs }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-headline font-bold text-on-surface-variant">{{ l.highest_score if l.highest_score else 0 }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-headline font-bold text-secondary">
                             {% if l.balls_faced %}{{ "%.1f"|format((l.runs / l.balls_faced) * 100) }}{% else %}0.0{% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">
-                            {% if l.matches %}{{ "%.1f"|format(l.runs/l.matches) }}{% else %}0.0{% endif %}
+                            {% if l.dismissals and l.dismissals > 0 %}{{ "%.1f"|format(l.runs/l.dismissals) }}{% else %}{{ "%.1f"|format(l.runs | default(0)) }}{% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.fifties }} / {{ l.thirties }}</td>
                     </tr>

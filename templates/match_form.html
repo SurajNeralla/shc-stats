@@ -48,6 +48,15 @@
                     </div>
                     <h4 class="font-headline font-bold text-sm uppercase tracking-wider text-primary">Batting</h4>
                 </div>
+                <div class="flex items-center gap-3 mb-6">
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <div class="relative flex items-center justify-center w-6 h-6 rounded border-2 border-outline-variant/30 group-hover:border-primary/50 transition-colors">
+                            <input type="checkbox" name="not_out" class="opacity-0 absolute inset-0 cursor-pointer peer">
+                            <span class="material-symbols-outlined text-[16px] text-primary opacity-0 peer-checked:opacity-100 transition-opacity">check</span>
+                        </div>
+                        <span class="font-headline font-bold text-sm uppercase tracking-wider text-on-surface-variant group-hover:text-on-surface transition-colors">Not Out</span>
+                    </label>
+                </div>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {% set batting_fields = [
                         ('Runs Scored', 'runs', 'primary'),

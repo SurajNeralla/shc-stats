@@ -36,7 +36,7 @@
             <div class="bg-tertiary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-tertiary">emoji_events</span></div>
             <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Trophy Cabinet</h3>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <!-- Fifty -->
             <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-tertiary/10 border-tertiary/40' if stats.fifties > 0 else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
                 <div class="text-3xl mb-2">🏏</div>
@@ -68,6 +68,15 @@
                 <div class="text-xs text-on-surface-variant mt-1">30+ runs in a match</div>
                 {% if stats.thirties > 0 %}<div class="mt-1 text-[9px] font-black text-error">× {{ stats.thirties }} achieved!</div>{% endif %}
             </div>
+
+            <!-- Man of the Match -->
+            {% set motm_count = stats.man_of_match | default(0) %}
+            <div class="rounded-2xl p-4 text-center border transition-all {{ 'bg-gradient-to-b from-[#ffd170]/20 to-transparent border-[#ffd170]/50' if motm_count > 0 else 'bg-surface-container border-outline-variant/10 opacity-40' }}">
+                <div class="text-3xl mb-2">🏆</div>
+                <div class="text-[10px] font-black uppercase tracking-wider {{ 'text-[#ffd170]' if motm_count > 0 else 'text-outline' }}">Man of the Match</div>
+                <div class="text-xs text-on-surface-variant mt-1">Best player in a match</div>
+                {% if motm_count > 0 %}<div class="mt-1 text-[9px] font-black text-[#ffd170]">× {{ motm_count }} awarded!</div>{% endif %}
+            </div>
         </div>
     </section>
 
@@ -91,9 +100,9 @@
                 <div class="text-3xl font-headline font-black text-on-surface">{{ stats.highest_score | default(0) }}</div>
             </div>
             <div class="bg-surface-container p-4 rounded-2xl text-center border border-outline-variant/10">
-                <div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-[0.15em] mb-1">Avg</div>
+                <div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-[0.15em] mb-1">Bat Avg</div>
                 <div class="text-3xl font-headline font-black text-on-surface">
-                    {% if stats.matches %}{{ "%.1f"|format(stats.runs / stats.matches) }}{% else %}0.0{% endif %}
+                    {% if stats.dismissals and stats.dismissals > 0 %}{{ "%.1f"|format(stats.runs / stats.dismissals) }}{% else %}{{ stats.runs | default(0) }}{% endif %}
                 </div>
             </div>
             <div class="bg-surface-container p-4 rounded-2xl text-center border border-secondary/20">
@@ -234,7 +243,7 @@
             </div>
             <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(72,72,71,0.4);border-radius:14px;padding:10px 6px;text-align:center;">
                 <div style="font-size:9px;color:#adaaaa;text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:4px;">Bat Avg</div>
-                <div style="font-size:22px;font-weight:900;color:#ffffff;">{% if stats.matches %}{{ "%.0f"|format(stats.runs / stats.matches) }}{% else %}0{% endif %}</div>
+                <div style="font-size:22px;font-weight:900;color:#ffffff;">{% if stats.dismissals and stats.dismissals > 0 %}{{ "%.0f"|format(stats.runs / stats.dismissals) }}{% else %}{{ stats.runs | default(0) }}{% endif %}</div>
             </div>
         </div>
         <!-- Bottom Tag -->

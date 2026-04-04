@@ -70,7 +70,7 @@ def check_auth():
         return redirect(url_for('login'))
 
     if 'admin_token' not in session:
-        player_allowed = ['my_stats', 'dashboard', 'leaderboard', 'match_history', 'index', 'logout']
+        player_allowed = ['my_stats', 'dashboard', 'leaderboard', 'match_history', 'index', 'logout', 'live_scorecard']
         if request.endpoint not in player_allowed:
             return redirect(url_for('dashboard'))
 
@@ -198,6 +198,7 @@ def add_match(player_id):
         match_data = {
             'match_date': request.form.get('match_date') or None,
             'opponent': request.form.get('opponent'),
+            'not_out': request.form.get('not_out') == 'on',
             'runs': int(request.form.get('runs', 0)),
             'balls_faced': int(request.form.get('balls_faced', 0)),
             'fours': int(request.form.get('fours', 0)),
@@ -381,16 +382,50 @@ def live_scorecard(match_id):
         if curr_score >= match['target']:
             is_innings_over = True
 
+    if match['status'] == 'completed':
+        # Compute awards dynamically
+        best_bat = max(players, key=lambda x: x.get('runs_scored', 0), default=None)
+        best_bowl = max(players, key=lambda x: x.get('wickets_taken', 0), default=None)
+        
+        if best_bat and best_bowl:
+            bat_score = (best_bat.get('runs_scored', 0) * 1) + (best_bat.get('sixes_hit', 0) * 2)
+            bowl_score = (best_bowl.get('wickets_taken', 0) * 20)
+            motm = best_bat if bat_score >= bowl_score else best_bowl
+        else:
+            motm = best_bat or best_bowl
+
+        awards = {
+            "best_batsman": best_bat,
+            "best_bowler": best_bowl,
+            "motm": motm
+        }
+    else:
+        awards = None
+        
+    # Determine innings 1 team and innings 2 team based on toss
+    if (match.get('toss_winner') == 'team_a' and match.get('toss_decision') == 'bat') or (match.get('toss_winner') == 'team_b' and match.get('toss_decision') == 'bowl'):
+        innings_1_team = 'team_a'
+        innings_2_team = 'team_b'
+    else:
+        innings_1_team = 'team_b'
+        innings_2_team = 'team_a'
+
     return render_template('live_scorecard.html', 
         match=match, 
         batting_team=batting_team, 
         batting_players=batting_players, 
         bowling_players=bowling_players,
+        team_a_players=team_a,
+        team_b_players=team_b,
+        innings_1_team=innings_1_team,
+        innings_2_team=innings_2_team,
+        awards=awards,
         striker=striker,
         non_striker=non_striker,
         bowler=bowler,
         ball_logs=ball_logs,
-        is_innings_over=is_innings_over
+        is_innings_over=is_innings_over,
+        is_admin=('admin_token' in session)
     )
 
 @app.route('/api/debug/live-match/<match_id>/players')
@@ -731,6 +766,14 @@ def handle_end_match(match_id):
                 "runs": motm.get("runs_scored", 0),
                 "wickets": motm.get("wickets_taken", 0),
             }
+            # Persist MOTM to career stats — increment the man_of_match counter
+            try:
+                motm_pid = motm['player_id']
+                curr = supabase.table("player_stats").select("man_of_match").eq("player_id", motm_pid).execute()
+                curr_val = (curr.data[0].get("man_of_match") or 0) if curr.data else 0
+                supabase.table("player_stats").update({"man_of_match": curr_val + 1}).eq("player_id", motm_pid).execute()
+            except Exception as motm_err:
+                print("Failed to persist MOTM:", motm_err)
     except Exception as e:
         print("Error computing awards or recalculating stats on match end", e)
         
