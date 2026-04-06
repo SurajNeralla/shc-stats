@@ -134,12 +134,24 @@
         }
 
         /* Hide scrollbar utility */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @media (max-width: 639px) {
+            .mobile-bottom-nav {
+                display: flex;
+            }
+            .desktop-nav {
+                display: none;
+            }
         }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        @media (min-width: 640px) {
+            .mobile-bottom-nav {
+                display: none;
+            }
+            .desktop-nav {
+                display: flex;
+            }
         }
     </style>
 </head>
@@ -157,51 +169,76 @@
     {% endif %}
 
     {% if session.get('admin_token') or session.get('player_id') %}
-    <header class="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-xl flex justify-between items-center px-6 h-16 shadow-[0px_20px_40px_rgba(0,0,0,0.6)]">
+    <!-- Top Header (Logo & Logout) -->
+    <header class="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-xl flex justify-between items-center px-6 h-16 shadow-2xl border-b border-outline-variant/10">
         <div class="flex items-center gap-4">
             <h1 class="text-xl font-black italic text-[#00FC41] tracking-widest font-headline">SHC STATS</h1>
         </div>
-        <div class="fixed bottom-0 left-0 w-full bg-[#0e0e0e]/95 backdrop-blur-3xl border-t border-outline-variant/20 sm:border-none sm:bg-transparent sm:static sm:w-auto flex overflow-x-auto no-scrollbar items-center gap-6 sm:gap-1 px-6 sm:px-0 py-1 sm:py-0 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] sm:shadow-none">
-            {% if session.get('player_id') %}
-            <a href="{{ url_for('my_stats') }}" class="px-3 py-4 flex flex-col items-center gap-1 {% if request.endpoint == 'my_stats' %}nav-link-active{% else %}nav-link{% endif %}" title="My Stats">
-                <span class="material-symbols-outlined">person</span>
-                <span class="text-[8px] font-black uppercase tracking-widest sm:text-xs sm:inline hidden">Stats</span>
-            </a>
-            {% endif %}
-            
-            {% if session.get('admin_token') %}
-            <a href="{{ url_for('dashboard') }}" class="px-3 py-4 flex flex-col items-center gap-1 {% if request.endpoint == 'dashboard' %}nav-link-active{% else %}nav-link{% endif %}" title="Dashboard">
-                <span class="material-symbols-outlined">grid_view</span>
-                <span class="text-[8px] font-black uppercase tracking-widest sm:text-xs sm:inline hidden">Roster</span>
-            </a>
-            {% endif %}
-            
-            <a href="{{ url_for('leaderboard') }}" class="px-3 py-4 flex flex-col items-center gap-1 {% if request.endpoint == 'leaderboard' %}nav-link-active{% else %}nav-link{% endif %}" title="Leaderboard">
-                <span class="material-symbols-outlined">leaderboard</span>
-                <span class="text-[8px] font-black uppercase tracking-widest sm:text-xs sm:inline hidden">Rank</span>
-            </a>
-            
-            <a href="{{ url_for('compare_players_page') }}" class="px-3 py-4 flex flex-col items-center gap-1 {% if request.endpoint == 'compare_players_page' %}nav-link-active{% else %}nav-link{% endif %}" title="Compare">
-                <span class="material-symbols-outlined">compare_arrows</span>
-                <span class="text-[8px] font-black uppercase tracking-widest sm:text-xs sm:inline hidden">Battle</span>
-            </a>
 
+        <!-- Desktop Navigation (Internal to Header) -->
+        <div class="desktop-nav items-center gap-1">
+            {% if session.get('player_id') %}
+            <a href="{{ url_for('my_stats') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'my_stats' %}nav-link-active{% else %}nav-link{% endif %}">
+                Stats
+            </a>
+            {% endif %}
             {% if session.get('admin_token') %}
-            <a href="{{ url_for('new_player') }}" class="px-3 py-4 flex flex-col items-center gap-1 {% if request.endpoint == 'new_player' %}nav-link-active{% else %}nav-link{% endif %}" title="Add Player">
-                <span class="material-symbols-outlined">person_add</span>
-                <span class="text-[8px] font-black uppercase tracking-widest sm:text-xs sm:inline hidden">Add</span>
+            <a href="{{ url_for('dashboard') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'dashboard' %}nav-link-active{% else %}nav-link{% endif %}">
+                Roster
+            </a>
+            {% endif %}
+            <a href="{{ url_for('leaderboard') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'leaderboard' %}nav-link-active{% else %}nav-link{% endif %}">
+                Rank
+            </a>
+            <a href="{{ url_for('compare_players_page') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'compare_players_page' %}nav-link-active{% else %}nav-link{% endif %}">
+                Battle
+            </a>
+            {% if session.get('admin_token') %}
+            <a href="{{ url_for('new_player') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'new_player' %}nav-link-active{% else %}nav-link{% endif %}">
+                Add
             </a>
             {% endif %}
         </div>
-        <div class="flex items-center gap-2">
-            <a href="{{ url_for('logout') }}" class="text-xs font-bold text-outline hover:text-error uppercase tracking-wider transition duration-200 px-3 py-2 rounded-lg hover:bg-surface-bright">
-                Logout
+
+        <div>
+            <a href="{{ url_for('logout') }}" class="text-[10px] font-black text-outline hover:text-error uppercase tracking-widest transition duration-200 px-3 py-2 rounded-lg hover:bg-surface-bright flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">logout</span>
+                <span class="sm:inline hidden">Logout</span>
             </a>
         </div>
     </header>
+
+    <!-- Mobile Bottom Navigation (Tabs) -->
+    <nav class="mobile-bottom-nav fixed bottom-0 left-0 w-full z-50 bg-black/95 backdrop-blur-2xl border-t border-outline-variant/20 flex justify-around items-center px-2 py-1 shadow-[0_-10px_40px_rgba(0,0,0,0.8)] sm:hidden">
+        {% if session.get('player_id') %}
+        <a href="{{ url_for('my_stats') }}" class="p-4 flex flex-col items-center gap-1 {% if request.endpoint == 'my_stats' %}text-primary{% else %}text-outline{% endif %}">
+            <span class="material-symbols-outlined text-[28px] {% if request.endpoint == 'my_stats' %}fill-1{% endif %}">person</span>
+        </a>
+        {% endif %}
+        
+        {% if session.get('admin_token') %}
+        <a href="{{ url_for('dashboard') }}" class="p-4 flex flex-col items-center gap-1 {% if request.endpoint == 'dashboard' %}text-primary{% else %}text-outline{% endif %}">
+            <span class="material-symbols-outlined text-[28px] {% if request.endpoint == 'dashboard' %}fill-1{% endif %}">grid_view</span>
+        </a>
+        {% endif %}
+        
+        <a href="{{ url_for('leaderboard') }}" class="p-4 flex flex-col items-center gap-1 {% if request.endpoint == 'leaderboard' %}text-primary{% else %}text-outline{% endif %}">
+            <span class="material-symbols-outlined text-[28px] {% if request.endpoint == 'leaderboard' %}fill-1{% endif %}">leaderboard</span>
+        </a>
+        
+        <a href="{{ url_for('compare_players_page') }}" class="p-4 flex flex-col items-center gap-1 {% if request.endpoint == 'compare_players_page' %}text-primary{% else %}text-outline{% endif %}">
+            <span class="material-symbols-outlined text-[28px] {% if request.endpoint == 'compare_players_page' %}fill-1{% endif %}">compare_arrows</span>
+        </a>
+
+        {% if session.get('admin_token') %}
+        <a href="{{ url_for('new_player') }}" class="p-4 flex flex-col items-center gap-1 {% if request.endpoint == 'new_player' %}text-primary{% else %}text-outline{% endif %}">
+            <span class="material-symbols-outlined text-[28px] {% if request.endpoint == 'new_player' %}fill-1{% endif %}">person_add</span>
+        </a>
+        {% endif %}
+    </nav>
     {% endif %}
 
-    <main class="flex-grow flex flex-col pt-20">
+    <main class="flex-grow flex flex-col pt-16 pb-20 sm:pb-0">
         {% block content %}{% endblock %}
     </main>
 
