@@ -145,13 +145,35 @@ def dashboard():
         if next_wkt_milestone - wickets <= 2 and wickets > 0:
             milestones.append({'name': p['name'], 'type': 'wickets', 'target': next_wkt_milestone, 'diff': next_wkt_milestone - wickets})
 
+    # Fetch all logs for performance trend icons
+    try:
+        all_logs = supabase.table("match_logs").select("*").order("match_date", desc=True).limit(200).execute().data
+    except:
+        all_logs = []
+
     milestones.sort(key=lambda x: x['diff'])
+
+    # Organize logs by player for the form guide
+    player_forms = {}
+    for l in all_logs:
+        pid = str(l.get('player_id'))
+        if pid not in player_forms:
+            player_forms[pid] = []
+        if len(player_forms[pid]) < 5:
+            # Simple form logic: 🟢 (30+ runs / 1+ wkts), 🟡 (10-30 runs), 🔴 (otherwise)
+            score = l.get('runs', 0)
+            wkts = l.get('wickets', 0)
+            if score >= 30 or wkts >= 1: status = 'good'
+            elif score >= 10: status = 'average'
+            else: status = 'low'
+            player_forms[pid].append(status)
 
     return render_template('dashboard.html', 
                           players=all_players, 
                           search=search, 
                           is_admin=is_admin,
-                          milestones=milestones[:5])
+                          milestones=milestones[:5],
+                          player_forms=player_forms)
 
 @app.route('/players/new', methods=['GET', 'POST'])
 def new_player():

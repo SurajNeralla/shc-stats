@@ -163,24 +163,33 @@
         </div>
         <div class="fixed bottom-0 left-0 w-full bg-[#0e0e0e]/95 backdrop-blur-3xl border-t border-outline-variant/20 sm:border-none sm:bg-transparent sm:static sm:w-auto flex overflow-x-auto no-scrollbar items-center gap-6 sm:gap-1 px-6 sm:px-0 py-1 sm:py-0 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] sm:shadow-none">
             {% if session.get('player_id') %}
-            <a href="{{ url_for('my_stats') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'my_stats' %}nav-link-active{% else %}nav-link{% endif %}">
-                My Stats
+            <a href="{{ url_for('my_stats') }}" class="px-3 py-4 flex flex-col items-center gap-1 {% if request.endpoint == 'my_stats' %}nav-link-active{% else %}nav-link{% endif %}" title="My Stats">
+                <span class="material-symbols-outlined">person</span>
+                <span class="text-[8px] font-black uppercase tracking-widest sm:text-xs sm:inline hidden">Stats</span>
             </a>
             {% endif %}
+            
             {% if session.get('admin_token') %}
-            <a href="{{ url_for('dashboard') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'dashboard' %}nav-link-active{% else %}nav-link{% endif %}">
-                Dashboard
+            <a href="{{ url_for('dashboard') }}" class="px-3 py-4 flex flex-col items-center gap-1 {% if request.endpoint == 'dashboard' %}nav-link-active{% else %}nav-link{% endif %}" title="Dashboard">
+                <span class="material-symbols-outlined">grid_view</span>
+                <span class="text-[8px] font-black uppercase tracking-widest sm:text-xs sm:inline hidden">Roster</span>
             </a>
             {% endif %}
-            <a href="{{ url_for('leaderboard') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'leaderboard' %}nav-link-active{% else %}nav-link{% endif %}">
-                Leaderboard
+            
+            <a href="{{ url_for('leaderboard') }}" class="px-3 py-4 flex flex-col items-center gap-1 {% if request.endpoint == 'leaderboard' %}nav-link-active{% else %}nav-link{% endif %}" title="Leaderboard">
+                <span class="material-symbols-outlined">leaderboard</span>
+                <span class="text-[8px] font-black uppercase tracking-widest sm:text-xs sm:inline hidden">Rank</span>
             </a>
-            <a href="{{ url_for('compare_players_page') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'compare_players_page' %}nav-link-active{% else %}nav-link{% endif %}">
-                Compare
+            
+            <a href="{{ url_for('compare_players_page') }}" class="px-3 py-4 flex flex-col items-center gap-1 {% if request.endpoint == 'compare_players_page' %}nav-link-active{% else %}nav-link{% endif %}" title="Compare">
+                <span class="material-symbols-outlined">compare_arrows</span>
+                <span class="text-[8px] font-black uppercase tracking-widest sm:text-xs sm:inline hidden">Battle</span>
             </a>
+
             {% if session.get('admin_token') %}
-            <a href="{{ url_for('new_player') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'new_player' %}nav-link-active{% else %}nav-link{% endif %}">
-                Add Player
+            <a href="{{ url_for('new_player') }}" class="px-3 py-4 flex flex-col items-center gap-1 {% if request.endpoint == 'new_player' %}nav-link-active{% else %}nav-link{% endif %}" title="Add Player">
+                <span class="material-symbols-outlined">person_add</span>
+                <span class="text-[8px] font-black uppercase tracking-widest sm:text-xs sm:inline hidden">Add</span>
             </a>
             {% endif %}
         </div>

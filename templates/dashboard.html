@@ -44,6 +44,7 @@
                     <th class="px-6 py-5 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Team</th>
                     <th class="px-6 py-5 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Runs</th>
                     <th class="px-6 py-5 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Wkts</th>
+                    <th class="px-6 py-5 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Form</th>
                     <th class="px-6 py-5 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Actions</th>
                 </tr>
             </thead>
@@ -87,6 +88,17 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-center">
                         <span class="font-headline font-black text-secondary text-sm">{{ ps.wickets | default(0) }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center justify-center gap-1">
+                            {% set form = player_forms.get(player.id|string, []) %}
+                            {% for status in form %}
+                            <div class="w-2 h-2 rounded-full {% if status == 'good' %}bg-primary shadow-[0_0_5px_rgba(0,252,65,0.5)]{% elif status == 'average' %}bg-tertiary{% else %}bg-outline-variant{% endif %}" title="{{ status }}"></div>
+                            {% endfor %}
+                            {% if not form %}
+                            <span class="text-[9px] text-outline uppercase font-bold tracking-tighter">New</span>
+                            {% endif %}
+                        </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         {% if is_admin %}
