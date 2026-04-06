@@ -1,183 +1,271 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — SHC STATS{% endblock %}
+{% block title %}Battle Arena — SHC STATS{% endblock %}
+
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+
     <!-- Page Title -->
-    <div class="mb-8">
+    <div class="mb-4">
         <div class="flex items-center gap-2 mb-1">
-            <span class="w-8 h-1 bg-primary rounded-full"></span>
-            <span class="font-headline font-bold uppercase tracking-[0.2em] text-xs text-primary">Control Center</span>
+            <span class="w-8 h-1 bg-secondary rounded-full"></span>
+            <span class="font-headline font-bold uppercase tracking-[0.2em] text-xs text-secondary">Analytics</span>
         </div>
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <h2 class="text-3xl md:text-4xl font-headline font-black tracking-tight text-on-surface">PLAYER ROSTER</h2>
-            <form action="{{ url_for('dashboard') }}" method="GET" class="flex items-center gap-2 w-full md:w-auto">
-                <div class="relative flex-1 md:w-64">
-                    <input type="text" name="search" value="{{ search }}" placeholder="Search..." 
-                        class="bg-surface-bright border-none text-on-surface px-4 py-3 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50 w-full">
-                    {% if search %}
-                    <a href="{{ url_for('dashboard') }}" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-on-surface-variant hover:text-primary transition-colors">
-                        <span class="material-symbols-outlined text-sm">close</span>
-                    </a>
-                    {% endif %}
-                </div>
-                <button type="submit" class="bg-primary text-on-primary font-headline font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_4px_15px_rgba(0,252,65,0.2)]">
-                    Search
-                </button>
-            </form>
-        </div>
+        <h2 class="text-3xl sm:text-4xl font-headline font-black tracking-tight text-on-surface uppercase">Battle Arena</h2>
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <!-- Main Roster Area -->
-        <div class="lg:col-span-3 space-y-8">
 
-    {% set max_runs = 0 %}
-    {% set max_wkts = 0 %}
-    {% for p in players %}
-        {% set ps = p.player_stats[0] if p.player_stats is iterable and p.player_stats is not mapping else (p.player_stats or {}) %}
-        {% if ps.runs | default(0) > max_runs %}{% set max_runs = ps.runs %}{% endif %}
-        {% if ps.wickets | default(0) > max_wkts %}{% set max_wkts = ps.wickets %}{% endif %}
-    {% endfor %}
-
-    <!-- Player Table -->
-    <div class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden border border-outline-variant/10">
-        <table class="min-w-full">
-            <thead>
-                <tr class="border-b border-outline-variant/20 bg-surface-container/30">
-                    <th class="px-6 py-5 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Player</th>
-                    <th class="px-6 py-5 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Team</th>
-                    <th class="px-6 py-5 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Runs</th>
-                    <th class="px-6 py-5 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Wkts</th>
-                    <th class="px-6 py-5 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Form</th>
-                    <th class="px-6 py-5 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for player in players %}
-                {% set ps = player.player_stats[0] if player.player_stats is iterable and player.player_stats is not mapping else (player.player_stats or {}) %}
-                <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors group">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-10 w-10">
-                                {% set img_path = player.image_url if (player.image_url and player.image_url.startswith('/static/')) else player_image_url(player.name) %}
-                                {% if img_path %}
-                                <img class="h-10 w-10 rounded-xl object-cover border border-outline-variant/20 group-hover:border-primary/50 transition-colors" src="{{ img_path }}" alt="">
-                                {% else %}
-                                <div class="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-headline font-black text-lg">
-                                    {{ player.name[0] }}
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="ml-4">
-                                <div class="flex items-center gap-2">
-                                    <div class="text-sm font-headline font-bold text-on-surface uppercase">{{ player.name }}</div>
-                                    {% if ps.runs and ps.runs == max_runs and max_runs > 0 %}
-                                    <span class="text-[10px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">Top Scorer</span>
-                                    {% endif %}
-                                    {% if ps.wickets and ps.wickets == max_wkts and max_wkts > 0 %}
-                                    <span class="text-[10px] bg-secondary/20 text-secondary border border-secondary/30 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">Top Bowler</span>
-                                    {% endif %}
-                                </div>
-                                <div class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{{ player.role }}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-3 py-1 inline-flex text-[10px] leading-5 font-bold uppercase tracking-wider rounded-lg bg-surface-container border border-outline-variant/20 text-on-surface-variant">
-                            {{ player.team }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                        <span class="font-headline font-black text-primary text-sm">{{ ps.runs | default(0) }}</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                        <span class="font-headline font-black text-secondary text-sm">{{ ps.wickets | default(0) }}</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center justify-center gap-1">
-                            {% set form = player_forms.get(player.id|string, []) %}
-                            {% for status in form %}
-                            <div class="w-2 h-2 rounded-full {% if status == 'good' %}bg-primary shadow-[0_0_5px_rgba(0,252,65,0.5)]{% elif status == 'average' %}bg-tertiary{% else %}bg-outline-variant{% endif %}" title="{{ status }}"></div>
+    <!-- Comparison Hub -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        
+        <!-- Selection Sidebar -->
+        <div class="space-y-6">
+            <div class="bg-surface-container-low p-6 rounded-[1.5rem] shadow-xl border border-outline-variant/10">
+                <h3 class="font-headline font-bold text-sm uppercase tracking-wider mb-6 text-on-surface-variant">Select Opponents</h3>
+                
+                <div class="space-y-6">
+                    <!-- Player 1 -->
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Contender A</label>
+                        <select id="player1-select" class="w-full bg-[#1a1a1a] border-none text-white p-4 rounded-xl font-headline font-bold uppercase text-xs focus:ring-2 focus:ring-primary/50 transition-all cursor-pointer">
+                            <option value="" class="bg-[#1a1a1a] text-white">Select Player...</option>
+                            {% for p in players %}
+                            <option value="{{ p.id }}" class="bg-[#1a1a1a] text-white">{{ p.name }} ({{ p.team }})</option>
                             {% endfor %}
-                            {% if not form %}
-                            <span class="text-[9px] text-outline uppercase font-bold tracking-tighter">New</span>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        {% if is_admin %}
-                        <a href="{{ url_for('edit_player', player_id=player.id) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary/10 text-secondary hover:bg-secondary/20 transition-all font-headline font-bold text-[10px] uppercase tracking-wider">
-                            <span class="material-symbols-outlined text-sm">edit</span> Edit
-                        </a>
-                        <form action="{{ url_for('remove_player', player_id=player.id) }}" method="POST" class="inline" onsubmit="return confirm('Delete this player?');">
-                            <button type="submit" class="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-error/10 text-error hover:bg-error/20 transition-all font-headline font-bold text-[10px] uppercase tracking-wider">
-                                <span class="material-symbols-outlined text-sm">delete</span> Delete
-                            </button>
-                        </form>
-                        {% else %}
-                        <a href="{{ url_for('edit_player', player_id=player.id) }}" class="text-on-surface-variant hover:text-primary transition-colors">
-                            <span class="material-symbols-outlined">visibility</span>
-                        </a>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" class="px-6 py-12 text-center text-sm text-on-surface-variant">No players found.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-            </div>
-        </div>
-
-        <!-- Sidebar / Milestones -->
-        <div class="space-y-8">
-            <!-- Milestone Tracker -->
-            {% if milestones %}
-            <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl border border-outline-variant/10 overflow-hidden">
-                <div class="px-6 py-5 border-b border-outline-variant/20 flex items-center gap-3 bg-secondary/5">
-                    <div class="bg-secondary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-secondary">trending_up</span></div>
-                    <h3 class="font-headline font-bold text-sm uppercase tracking-wider">Milestone Watch</h3>
-                </div>
-                <div class="p-6 space-y-4">
-                    {% for m in milestones %}
-                    <div class="flex items-center justify-between group">
-                        <div class="space-y-1">
-                            <div class="font-headline font-bold text-xs uppercase text-on-surface">{{ m.name }}</div>
-                            <div class="text-[9px] font-black uppercase text-secondary tracking-widest italic">
-                                {{ m.diff }} {{ m.type }} away from {{ m.target }}
-                            </div>
-                        </div>
-                        <div class="w-10 h-10 rounded-full border-2 border-secondary/20 flex items-center justify-center text-[10px] font-black group-hover:bg-secondary/10 transition-all">
-                            {{ m.target }}
-                        </div>
+                        </select>
                     </div>
-                    {% endfor %}
+
+                    <!-- Player 2 -->
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-[0.2em] text-secondary">Contender B</label>
+                        <select id="player2-select" class="w-full bg-[#1a1a1a] border-none text-white p-4 rounded-xl font-headline font-bold uppercase text-xs focus:ring-2 focus:ring-secondary/50 transition-all cursor-pointer">
+                            <option value="" class="bg-[#1a1a1a] text-white">Select Player...</option>
+                            {% for p in players %}
+                            <option value="{{ p.id }}" class="bg-[#1a1a1a] text-white">{{ p.name }} ({{ p.team }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button id="compare-btn" class="w-full bg-on-surface text-surface py-5 rounded-2xl font-headline font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl">
+                        BATTLE STATS
+                    </button>
                 </div>
-            </section>
-            {% else %}
-            <!-- Fun Fact / Hint when no milestones -->
-            <div class="bg-surface-container p-6 rounded-[1.5rem] border border-outline-variant/10">
-                <span class="material-symbols-outlined text-primary mb-2">lightbulb</span>
-                <h4 class="font-headline font-bold text-xs uppercase tracking-widest mb-2">Did you know?</h4>
-                <p class="text-[11px] text-on-surface-variant leading-relaxed">
-                    Consistent performance leads to higher badges. Keep logging your matches to climb the leaderboards!
+            </div>
+
+            <!-- Context Hint -->
+            <div class="bg-primary/5 p-6 rounded-[1.5rem] border border-primary/20">
+                <span class="material-symbols-outlined text-primary mb-2">info</span>
+                <p class="text-xs text-on-surface-variant leading-relaxed">
+                    Battle metrics include career averages, boundary frequency, and bowling efficiency. 
+                    <strong>Green icons</strong> indicate the metric leader.
                 </p>
             </div>
-            {% endif %}
+        </div>
 
-            <!-- Quick Access Compare -->
-            <a href="{{ url_for('compare_players_page') }}" class="block group">
-                <div class="bg-gradient-to-br from-primary/20 to-secondary/20 p-6 rounded-[1.5rem] border border-primary/30 group-hover:scale-[1.02] transition-all">
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="material-symbols-outlined text-primary">compare_arrows</span>
-                        <h3 class="font-headline font-bold text-xs uppercase tracking-widest">Compare Tools</h3>
+        <!-- Comparison Results -->
+        <div class="lg:col-span-2 space-y-8" id="comparison-display" style="display: none;">
+            
+            <!-- Head to Head Card -->
+            <div class="flex flex-col sm:grid sm:grid-cols-3 gap-6 items-center bg-surface-container-low p-6 sm:p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                <div class="absolute -top-24 -left-24 w-64 h-64 bg-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
+                <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-secondary/20 rounded-full blur-[100px] pointer-events-none"></div>
+                
+                <!-- P1 Info -->
+                <div class="text-center space-y-3 relative z-10 w-full">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl overflow-hidden border-4 border-primary/30 shadow-2xl">
+                        <img id="p1-img" src="" class="w-full h-full object-cover">
                     </div>
-                    <p class="text-[10px] text-on-surface-variant leading-relaxed">Battle stats side-by-side between any two players in the league.</p>
+                    <div>
+                        <h4 id="p1-name" class="font-headline font-black text-lg text-primary uppercase">Player A</h4>
+                        <span id="p1-team" class="text-[9px] font-black uppercase text-on-surface-variant tracking-widest">Team Name</span>
+                    </div>
                 </div>
-            </a>
+
+                <!-- VS Divider -->
+                <div class="text-center relative z-10 py-2 sm:py-0">
+                    <div class="font-headline font-black text-4xl sm:text-6xl italic text-on-surface/10">VS</div>
+                </div>
+
+                <!-- P2 Info -->
+                <div class="text-center space-y-3 relative z-10 w-full">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl overflow-hidden border-4 border-secondary/30 shadow-2xl">
+                        <img id="p2-img" src="" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <h4 id="p2-name" class="font-headline font-black text-lg text-secondary uppercase">Player B</h4>
+                        <span id="p2-team" class="text-[9px] font-black uppercase text-on-surface-variant tracking-widest">Team Name</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Battleground -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="stats-grid">
+                <!-- Metrics will be injected here via JS -->
+            </div>
+
+            <!-- Charts -->
+            <div class="bg-surface-container-low p-4 sm:p-8 rounded-[2rem] shadow-xl overflow-hidden">
+                 <h3 class="font-headline font-bold text-sm uppercase tracking-wider mb-6 text-center text-on-surface-variant">Performance Radar</h3>
+                 <div class="relative h-[300px] sm:h-96 w-full"><canvas id="radarChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Initial Placeholder -->
+        <div class="lg:col-span-2 bg-surface-container-low/50 border-2 border-dashed border-outline-variant/30 rounded-[2.5rem] h-[600px] flex flex-col items-center justify-center text-center p-12 space-y-4" id="placeholder-display">
+            <div class="bg-on-surface/5 p-6 rounded-full"><span class="material-symbols-outlined text-6xl text-outline">compare_arrows</span></div>
+            <h4 class="font-headline font-black text-2xl text-on-surface/50 uppercase">Ready for Battle</h4>
+            <p class="text-on-surface-variant/40 max-w-xs text-sm">Select two players from the roster to begin a head-to-head statistical breakdown.</p>
         </div>
 
     </div>
+
 </div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let radarChart = null;
+
+document.getElementById('compare-btn').addEventListener('click', async () => {
+    const p1Id = document.getElementById('player1-select').value;
+    const p2Id = document.getElementById('player2-select').value;
+    
+    if (!p1Id || !p2Id || p1Id === p2Id) {
+        alert("Select two different players to compare.");
+        return;
+    }
+
+    const btn = document.getElementById('compare-btn');
+    btn.innerHTML = '<span class="animate-pulse">ANALYZING...</span>';
+    btn.disabled = true;
+
+    try {
+        const [r1, r2] = await Promise.all([
+            fetch(`/api/player/${p1Id}`),
+            fetch(`/api/player/${p2Id}`)
+        ]);
+        
+        const p1 = await r1.json();
+        const p2 = await r2.json();
+
+        renderComparison(p1, p2);
+    } catch (err) {
+        console.error(err);
+        alert("Failed to fetch player data.");
+    } finally {
+        btn.innerHTML = 'BATTLE STATS';
+        btn.disabled = false;
+    }
+});
+
+function renderComparison(p1, p2) {
+    document.getElementById('placeholder-display').style.display = 'none';
+    document.getElementById('comparison-display').style.display = 'block';
+
+    const s1 = p1.player_stats || {};
+    const s2 = p2.player_stats || {};
+
+    // Basic Info
+    document.getElementById('p1-name').innerText = p1.name;
+    document.getElementById('p1-team').innerText = p1.team;
+    document.getElementById('p1-img').src = p1.image_url || `https://ui-avatars.com/api/?name=${p1.name}&background=00FC41&color=000&bold=true`;
+
+    document.getElementById('p2-name').innerText = p2.name;
+    document.getElementById('p2-team').innerText = p2.team;
+    document.getElementById('p2-img').src = p2.image_url || `https://ui-avatars.com/api/?name=${p2.name}&background=0080FF&color=fff&bold=true`;
+
+    // Metrics Comparison
+    const metrics = [
+        { label: 'Runs', v1: s1.runs || 0, v2: s2.runs || 0, higherBetter: true },
+        { label: 'Avg', v1: s1.dismissals ? (s1.runs / s1.dismissals).toFixed(1) : s1.runs, v2: s2.dismissals ? (s2.runs / s2.dismissals).toFixed(1) : s2.runs, higherBetter: true },
+        { label: 'SR', v1: s1.balls_faced ? ((s1.runs / s1.balls_faced) * 100).toFixed(1) : 0, v2: s2.balls_faced ? ((s2.runs / s2.balls_faced) * 100).toFixed(1) : 0, higherBetter: true },
+        { label: 'Wickets', v1: s1.wickets || 0, v2: s2.wickets || 0, higherBetter: true },
+        { label: 'Econ', v1: s1.overs_bowled ? (s1.runs_conceded / s1.overs_bowled).toFixed(2) : 0, v2: s2.overs_bowled ? (s2.runs_conceded / s2.overs_bowled).toFixed(2) : 0, higherBetter: false },
+        { label: 'Sixes', v1: s1.sixes || 0, v2: s2.sixes || 0, higherBetter: true }
+    ];
+
+    const grid = document.getElementById('stats-grid');
+    grid.innerHTML = '';
+    
+    metrics.forEach(m => {
+        const val1 = parseFloat(m.v1);
+        const val2 = parseFloat(m.v2);
+        const p1Wins = m.higherBetter ? val1 > val2 : val1 < val2;
+        const p2Wins = m.higherBetter ? val2 > val1 : val2 < val1;
+
+        grid.innerHTML += `
+            <div class="bg-surface-container p-6 rounded-2xl flex flex-col gap-4 border border-outline-variant/10">
+                <div class="text-[10px] text-center font-black uppercase tracking-[0.3em] text-on-surface-variant">${m.label}</div>
+                <div class="flex items-center justify-between">
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="font-headline font-black text-2xl ${p1Wins ? 'text-primary' : 'text-on-surface/50'}">${val1}</span>
+                        ${p1Wins ? '<span class="material-symbols-outlined text-primary text-sm">keyboard_arrow_up</span>' : ''}
+                    </div>
+                    <div class="h-0.5 flex-1 bg-outline-variant/20 mx-4 rounded-full"></div>
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="font-headline font-black text-2xl ${p2Wins ? 'text-secondary' : 'text-on-surface/50'}">${val2}</span>
+                        ${p2Wins ? '<span class="material-symbols-outlined text-secondary text-sm">keyboard_arrow_up</span>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    // Radar Chart update
+    const labels = metrics.map(m => m.label);
+    const data1 = metrics.map(m => {
+        const val = parseFloat(m.v1);
+        const max = Math.max(val, parseFloat(m.v2), 1);
+        return (val / max) * 100;
+    });
+    const data2 = metrics.map(m => {
+        const val = parseFloat(m.v2);
+        const max = Math.max(val, parseFloat(m.v1), 1);
+        return (val / max) * 100;
+    });
+
+    if (radarChart) radarChart.destroy();
+    
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: p1.name,
+                    data: data1,
+                    fill: true,
+                    backgroundColor: 'rgba(0, 252, 65, 0.2)',
+                    borderColor: '#00FC41',
+                    pointBackgroundColor: '#00FC41',
+                    pointBorderColor: '#fff',
+                },
+                {
+                    label: p2.name,
+                    data: data2,
+                    fill: true,
+                    backgroundColor: 'rgba(0, 128, 255, 0.2)',
+                    borderColor: '#0080FF',
+                    pointBackgroundColor: '#0080FF',
+                    pointBorderColor: '#fff',
+                }
+            ]
+        },
+        options: {
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(120, 120, 120, 0.2)' },
+                    grid: { color: 'rgba(120, 120, 120, 0.2)' },
+                    pointLabels: { color: '#8e918f', font: { family: 'Inter', size: 10, weight: 'bold' } },
+                    ticks: { display: false },
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                }
+            },
+            plugins: {
+                legend: { labels: { color: '#e1e3de', font: { family: 'Outfit', weight: 'bold' } } }
+            }
+        }
+    });
+}
+</script>
 {% endblock %}

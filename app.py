@@ -69,7 +69,7 @@ def check_auth():
         return redirect(url_for('login'))
 
     if 'admin_token' not in session:
-        player_allowed = ['my_stats', 'dashboard', 'leaderboard', 'index', 'logout']
+        player_allowed = ['my_stats', 'dashboard', 'roster', 'leaderboard', 'index', 'logout']
         if request.endpoint not in player_allowed:
             return redirect(url_for('dashboard'))
 
@@ -122,6 +122,12 @@ def logout():
 
 @app.route('/dashboard')
 def dashboard():
+    all_players = get_players()
+    is_admin = 'admin_token' in session
+    return render_template('dashboard.html', players=all_players, is_admin=is_admin)
+
+@app.route('/roster')
+def roster():
     search = request.args.get('search', '')
     all_players = get_players()
     if search:
@@ -168,7 +174,7 @@ def dashboard():
             else: status = 'low'
             player_forms[pid].append(status)
 
-    return render_template('dashboard.html', 
+    return render_template('roster.html', 
                           players=all_players, 
                           search=search, 
                           is_admin=is_admin,

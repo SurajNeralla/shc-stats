@@ -177,25 +177,23 @@
 
         <!-- Desktop Navigation (Internal to Header) -->
         <div class="desktop-nav items-center gap-1">
-            {% if session.get('player_id') %}
-            <a href="{{ url_for('my_stats') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'my_stats' %}nav-link-active{% else %}nav-link{% endif %}">
-                Stats
-            </a>
-            {% endif %}
-            {% if session.get('admin_token') %}
             <a href="{{ url_for('dashboard') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'dashboard' %}nav-link-active{% else %}nav-link{% endif %}">
-                Roster
-            </a>
-            {% endif %}
-            <a href="{{ url_for('leaderboard') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'leaderboard' %}nav-link-active{% else %}nav-link{% endif %}">
-                Rank
-            </a>
-            <a href="{{ url_for('compare_players_page') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'compare_players_page' %}nav-link-active{% else %}nav-link{% endif %}">
                 Battle
             </a>
+            <a href="{{ url_for('roster') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'roster' %}nav-link-active{% else %}nav-link{% endif %}">
+                Roster
+            </a>
+            <a href="{{ url_for('leaderboard') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'leaderboard' %}nav-link-active{% else %}nav-link{% endif %}">
+                Rankings
+            </a>
+            {% if session.get('player_id') %}
+            <a href="{{ url_for('my_stats') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'my_stats' %}nav-link-active{% else %}nav-link{% endif %}">
+                My Stats
+            </a>
+            {% endif %}
             {% if session.get('admin_token') %}
             <a href="{{ url_for('new_player') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'new_player' %}nav-link-active{% else %}nav-link{% endif %}">
-                Add
+                Add Player
             </a>
             {% endif %}
         </div>
@@ -209,29 +207,27 @@
     </header>
 
     <nav class="mobile-bottom-nav fixed bottom-0 left-0 w-full z-50 bg-[#0a0a0a]/95 backdrop-blur-2xl border-t border-outline-variant/30 flex justify-around items-center px-1 py-2 shadow-[0_-10px_50px_rgba(0,0,0,1)] sm:hidden">
-        {% if session.get('player_id') %}
-        <a href="{{ url_for('my_stats') }}" class="flex-1 flex flex-col items-center gap-1 {% if request.endpoint == 'my_stats' %}text-primary{% else %}text-outline{% endif %}">
-            <span class="material-symbols-outlined text-[24px] {% if request.endpoint == 'my_stats' %}fill-1{% endif %}">person</span>
-            <span class="text-[8px] font-black uppercase tracking-tighter">My Stats</span>
-        </a>
-        {% endif %}
-        
-        {% if session.get('admin_token') %}
         <a href="{{ url_for('dashboard') }}" class="flex-1 flex flex-col items-center gap-1 {% if request.endpoint == 'dashboard' %}text-primary{% else %}text-outline{% endif %}">
-            <span class="material-symbols-outlined text-[24px] {% if request.endpoint == 'dashboard' %}fill-1{% endif %}">grid_view</span>
+            <span class="material-symbols-outlined text-[24px] {% if request.endpoint == 'dashboard' %}fill-1{% endif %}">swords</span>
+            <span class="text-[8px] font-black uppercase tracking-tighter">Battle</span>
+        </a>
+
+        <a href="{{ url_for('roster') }}" class="flex-1 flex flex-col items-center gap-1 {% if request.endpoint == 'roster' %}text-primary{% else %}text-outline{% endif %}">
+            <span class="material-symbols-outlined text-[24px] {% if request.endpoint == 'roster' %}fill-1{% endif %}">grid_view</span>
             <span class="text-[8px] font-black uppercase tracking-tighter">Roster</span>
         </a>
-        {% endif %}
         
         <a href="{{ url_for('leaderboard') }}" class="flex-1 flex flex-col items-center gap-1 {% if request.endpoint == 'leaderboard' %}text-primary{% else %}text-outline{% endif %}">
             <span class="material-symbols-outlined text-[24px] {% if request.endpoint == 'leaderboard' %}fill-1{% endif %}">leaderboard</span>
             <span class="text-[8px] font-black uppercase tracking-tighter">Rankings</span>
         </a>
         
-        <a href="{{ url_for('compare_players_page') }}" class="flex-1 flex flex-col items-center gap-1 {% if request.endpoint == 'compare_players_page' %}text-primary{% else %}text-outline{% endif %}">
-            <span class="material-symbols-outlined text-[24px] {% if request.endpoint == 'compare_players_page' %}fill-1{% endif %}">compare_arrows</span>
-            <span class="text-[8px] font-black uppercase tracking-tighter">Battle</span>
+        {% if session.get('player_id') %}
+        <a href="{{ url_for('my_stats') }}" class="flex-1 flex flex-col items-center gap-1 {% if request.endpoint == 'my_stats' %}text-primary{% else %}text-outline{% endif %}">
+            <span class="material-symbols-outlined text-[24px] {% if request.endpoint == 'my_stats' %}fill-1{% endif %}">person</span>
+            <span class="text-[8px] font-black uppercase tracking-tighter">Me</span>
         </a>
+        {% endif %}
 
         {% if session.get('admin_token') %}
         <a href="{{ url_for('new_player') }}" class="flex-1 flex flex-col items-center gap-1 {% if request.endpoint == 'new_player' %}text-primary{% else %}text-outline{% endif %}">
