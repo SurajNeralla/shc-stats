@@ -12,65 +12,51 @@
             <h2 class="text-4xl font-headline font-black tracking-tight text-on-surface">PLAYER ROSTER</h2>
             <form action="{{ url_for('dashboard') }}" method="GET" class="flex gap-2">
                 <input type="text" name="search" value="{{ search }}" placeholder="Search players..." class="bg-surface-bright border-none text-on-surface px-4 py-2.5 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50 w-56">
+                {% if search %}
+                <a href="{{ url_for('dashboard') }}" class="px-3 py-2.5 bg-surface-container text-on-surface-variant rounded-xl hover:bg-surface-container-high transition-all flex items-center">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </a>
+                {% endif %}
                 <button type="submit" class="px-5 py-2.5 bg-primary text-on-primary font-headline font-bold text-xs uppercase tracking-wider rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_4px_15px_rgba(0,252,65,0.2)]">
                     Search
                 </button>
             </form>
         </div>
     </div>
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Main Roster Area -->
+        <div class="lg:col-span-3 space-y-8">
 
-    {% if is_admin and live_matches %}
-    <!-- Active Live Matches -->
-    <div class="kinetic-gradient-border p-6 shadow-2xl mb-10">
-        <div class="flex items-center gap-3 mb-5">
-            <div class="bg-error/10 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-error">sports_cricket</span>
-            </div>
-            <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Active Live Matches</h3>
-        </div>
-        <div class="space-y-3">
-            {% for m in live_matches %}
-            <div class="bg-surface-container-low p-4 rounded-2xl flex items-center justify-between border border-outline-variant/20">
-                <div>
-                    <h4 class="text-md font-headline font-bold text-on-surface">{{ m.team_a_name }} <span class="text-outline text-sm">vs</span> {{ m.team_b_name }}</h4>
-                    <p class="text-xs text-on-surface-variant uppercase tracking-wider mt-1">Status: <span class="capitalize font-bold text-tertiary">{{ m.status }}</span></p>
-                </div>
-                <div class="flex gap-2">
-                    <a href="{{ url_for('live_scorecard', match_id=m.id) if m.status != 'setup' else url_for('live_match_toss', match_id=m.id) }}" class="px-4 py-2 bg-primary/20 text-primary font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-primary/30 transition-all border border-primary/30">
-                        Resume
-                    </a>
-                    <form action="/api/live-match/{{ m.id }}/delete" method="POST" onsubmit="return confirm('Delete match & rollback all stats?');" class="inline">
-                        <button type="submit" class="px-4 py-2 bg-error/20 text-error font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-error/30 transition-all border border-error/30">
-                            Delete
-                        </button>
-                    </form>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
+    {% set max_runs = 0 %}
+    {% set max_wkts = 0 %}
+    {% for p in players %}
+        {% set ps = p.player_stats[0] if p.player_stats is iterable and p.player_stats is not mapping else (p.player_stats or {}) %}
+        {% if ps.runs | default(0) > max_runs %}{% set max_runs = ps.runs %}{% endif %}
+        {% if ps.wickets | default(0) > max_wkts %}{% set max_wkts = ps.wickets %}{% endif %}
+    {% endfor %}
 
     <!-- Player Table -->
-    <div class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden">
+    <div class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden border border-outline-variant/10">
         <table class="min-w-full">
             <thead>
-                <tr class="border-b border-outline-variant/20">
-                    <th class="px-6 py-4 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Player</th>
-                    <th class="px-6 py-4 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Team</th>
-                    <th class="px-6 py-4 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Role</th>
-                    <th class="px-6 py-4 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Actions</th>
+                <tr class="border-b border-outline-variant/20 bg-surface-container/30">
+                    <th class="px-6 py-5 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Player</th>
+                    <th class="px-6 py-5 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Team</th>
+                    <th class="px-6 py-5 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Runs</th>
+                    <th class="px-6 py-5 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Wkts</th>
+                    <th class="px-6 py-5 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for player in players %}
-                <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors">
+                {% set ps = player.player_stats[0] if player.player_stats is iterable and player.player_stats is not mapping else (player.player_stats or {}) %}
+                <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors group">
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 h-10 w-10">
                                 {% set img_path = player.image_url if (player.image_url and player.image_url.startswith('/static/')) else player_image_url(player.name) %}
                                 {% if img_path %}
-                                <img class="h-10 w-10 rounded-xl object-cover border border-outline-variant/20" src="{{ img_path }}" alt="">
+                                <img class="h-10 w-10 rounded-xl object-cover border border-outline-variant/20 group-hover:border-primary/50 transition-colors" src="{{ img_path }}" alt="">
                                 {% else %}
                                 <div class="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-headline font-black text-lg">
                                     {{ player.name[0] }}
@@ -78,35 +64,105 @@
                                 {% endif %}
                             </div>
                             <div class="ml-4">
-                                <div class="text-sm font-headline font-bold text-on-surface uppercase">{{ player.name }}</div>
-                                <div class="text-xs text-on-surface-variant">Age: {{ player.age }}</div>
+                                <div class="flex items-center gap-2">
+                                    <div class="text-sm font-headline font-bold text-on-surface uppercase">{{ player.name }}</div>
+                                    {% if ps.runs and ps.runs == max_runs and max_runs > 0 %}
+                                    <span class="text-[10px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">Top Scorer</span>
+                                    {% endif %}
+                                    {% if ps.wickets and ps.wickets == max_wkts and max_wkts > 0 %}
+                                    <span class="text-[10px] bg-secondary/20 text-secondary border border-secondary/30 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">Top Bowler</span>
+                                    {% endif %}
+                                </div>
+                                <div class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{{ player.role }}</div>
                             </div>
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-3 py-1 inline-flex text-[10px] leading-5 font-bold uppercase tracking-wider rounded-lg bg-primary/10 text-primary border border-primary/20">
+                        <span class="px-3 py-1 inline-flex text-[10px] leading-5 font-bold uppercase tracking-wider rounded-lg bg-surface-container border border-outline-variant/20 text-on-surface-variant">
                             {{ player.team }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant font-medium">
-                        {{ player.role }}
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <span class="font-headline font-black text-primary text-sm">{{ ps.runs | default(0) }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <span class="font-headline font-black text-secondary text-sm">{{ ps.wickets | default(0) }}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         {% if is_admin %}
-                        <a href="{{ url_for('edit_player', player_id=player.id) }}" class="text-secondary hover:text-secondary-dim font-bold text-xs uppercase tracking-wider mr-4 transition-colors">Edit</a>
+                        <a href="{{ url_for('edit_player', player_id=player.id) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary/10 text-secondary hover:bg-secondary/20 transition-all font-headline font-bold text-[10px] uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-sm">edit</span> Edit
+                        </a>
                         <form action="{{ url_for('remove_player', player_id=player.id) }}" method="POST" class="inline" onsubmit="return confirm('Delete this player?');">
-                            <button type="submit" class="text-error hover:text-error-dim font-bold text-xs uppercase tracking-wider transition-colors">Delete</button>
+                            <button type="submit" class="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-error/10 text-error hover:bg-error/20 transition-all font-headline font-bold text-[10px] uppercase tracking-wider">
+                                <span class="material-symbols-outlined text-sm">delete</span> Delete
+                            </button>
                         </form>
+                        {% else %}
+                        <a href="{{ url_for('edit_player', player_id=player.id) }}" class="text-on-surface-variant hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined">visibility</span>
+                        </a>
                         {% endif %}
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4" class="px-6 py-12 text-center text-sm text-on-surface-variant">No players registered yet.</td>
+                    <td colspan="5" class="px-6 py-12 text-center text-sm text-on-surface-variant">No players found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+            </div>
+        </div>
+
+        <!-- Sidebar / Milestones -->
+        <div class="space-y-8">
+            <!-- Milestone Tracker -->
+            {% if milestones %}
+            <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl border border-outline-variant/10 overflow-hidden">
+                <div class="px-6 py-5 border-b border-outline-variant/20 flex items-center gap-3 bg-secondary/5">
+                    <div class="bg-secondary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-secondary">trending_up</span></div>
+                    <h3 class="font-headline font-bold text-sm uppercase tracking-wider">Milestone Watch</h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    {% for m in milestones %}
+                    <div class="flex items-center justify-between group">
+                        <div class="space-y-1">
+                            <div class="font-headline font-bold text-xs uppercase text-on-surface">{{ m.name }}</div>
+                            <div class="text-[9px] font-black uppercase text-secondary tracking-widest italic">
+                                {{ m.diff }} {{ m.type }} away from {{ m.target }}
+                            </div>
+                        </div>
+                        <div class="w-10 h-10 rounded-full border-2 border-secondary/20 flex items-center justify-center text-[10px] font-black group-hover:bg-secondary/10 transition-all">
+                            {{ m.target }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% else %}
+            <!-- Fun Fact / Hint when no milestones -->
+            <div class="bg-surface-container p-6 rounded-[1.5rem] border border-outline-variant/10">
+                <span class="material-symbols-outlined text-primary mb-2">lightbulb</span>
+                <h4 class="font-headline font-bold text-xs uppercase tracking-widest mb-2">Did you know?</h4>
+                <p class="text-[11px] text-on-surface-variant leading-relaxed">
+                    Consistent performance leads to higher badges. Keep logging your matches to climb the leaderboards!
+                </p>
+            </div>
+            {% endif %}
+
+            <!-- Quick Access Compare -->
+            <a href="{{ url_for('compare_players_page') }}" class="block group">
+                <div class="bg-gradient-to-br from-primary/20 to-secondary/20 p-6 rounded-[1.5rem] border border-primary/30 group-hover:scale-[1.02] transition-all">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="material-symbols-outlined text-primary">compare_arrows</span>
+                        <h3 class="font-headline font-bold text-xs uppercase tracking-widest">Compare Tools</h3>
+                    </div>
+                    <p class="text-[10px] text-on-surface-variant leading-relaxed">Battle stats side-by-side between any two players in the league.</p>
+                </div>
+            </a>
+        </div>
+
     </div>
 </div>
 {% endblock %}

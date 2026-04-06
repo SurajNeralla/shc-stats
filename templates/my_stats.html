@@ -123,12 +123,39 @@
                 <div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-[0.15em] mb-1">1s / 2s</div>
                 <div class="text-3xl font-headline font-black text-on-surface">{{ stats.ones | default(0) }} / {{ stats.twos | default(0) }}</div>
             </div>
-            <div class="bg-surface-container p-4 rounded-2xl text-center border border-outline-variant/10">
-                <div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-[0.15em] mb-1">Stumpings</div>
-                <div class="text-3xl font-headline font-black text-on-surface">{{ stats.stumpings | default(0) }}</div>
-            </div>
+    </section>
+
+    <!-- Personal Bests -->
+    {% if logs %}
+    {% set pb_runs = [0] %}
+    {% set pb_wkts = [0] %}
+    {% set pb_sixes = [0] %}
+    {% set pb_fours = [0] %}
+    {% for l in logs %}
+        {% if l.runs > pb_runs[0] %}{% set _ = pb_runs.append(l.runs) %}{% set _ = pb_runs.pop(0) %}{% endif %}
+        {% if l.wickets > pb_wkts[0] %}{% set _ = pb_wkts.append(l.wickets) %}{% set _ = pb_wkts.pop(0) %}{% endif %}
+        {% if l.sixes > pb_sixes[0] %}{% set _ = pb_sixes.append(l.sixes) %}{% set _ = pb_sixes.pop(0) %}{% endif %}
+        {% if l.fours > pb_fours[0] %}{% set _ = pb_fours.append(l.fours) %}{% set _ = pb_fours.pop(0) %}{% endif %}
+    {% endfor %}
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-gradient-to-br from-primary/10 to-transparent p-4 rounded-2xl border border-primary/20">
+            <div class="text-[10px] text-primary uppercase font-black tracking-widest mb-1">Highest Score</div>
+            <div class="text-2xl font-headline font-black">{{ pb_runs[0] }}</div>
+        </div>
+        <div class="bg-gradient-to-br from-secondary/10 to-transparent p-4 rounded-2xl border border-secondary/20">
+            <div class="text-[10px] text-secondary uppercase font-black tracking-widest mb-1">Best Bowling</div>
+            <div class="text-2xl font-headline font-black">{{ pb_wkts[0] }} Wkts</div>
+        </div>
+        <div class="bg-gradient-to-br from-error/10 to-transparent p-4 rounded-2xl border border-error/20">
+            <div class="text-[10px] text-error uppercase font-black tracking-widest mb-1">Most Sixes (Inns)</div>
+            <div class="text-2xl font-headline font-black">{{ pb_sixes[0] }}</div>
+        </div>
+        <div class="bg-gradient-to-br from-tertiary/10 to-transparent p-4 rounded-2xl border border-tertiary/20">
+            <div class="text-[10px] text-tertiary uppercase font-black tracking-widest mb-1">Most Fours (Inns)</div>
+            <div class="text-2xl font-headline font-black">{{ pb_fours[0] }}</div>
         </div>
     </section>
+    {% endif %}
 
     <!-- Analytics Charts -->
     {% if logs|length > 1 %}
@@ -172,27 +199,30 @@
                 <thead>
                     <tr class="border-b border-outline-variant/20">
                         <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Date / Opponent</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Batting (R/B/1s/2s/4s/6s)</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Bowling (O/M/R/W)</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Batting Stats (R / B / 4s / 6s)</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Bowling Stats (O / M / R / W)</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for log in logs %}
-                    <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors">
+                    <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors {% if log.runs >= 50 %}bg-tertiary/5{% elif log.runs >= 30 %}bg-primary/5{% elif log.wickets >= 3 %}bg-secondary/5{% endif %}">
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <div class="font-headline font-bold text-on-surface">{{ log.match_date }}</div>
-                            <div class="text-on-surface-variant text-xs">vs {{ log.opponent }}</div>
+                            <div class="font-headline font-bold {% if log.runs >= 50 %}text-tertiary{% elif log.runs >= 30 %}text-primary{% else %}text-on-surface{% endif %}">{{ log.match_date }}</div>
+                            <div class="text-on-surface-variant text-xs font-medium">vs {{ log.opponent }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">
-                            <span class="font-headline font-black text-primary px-2 py-0.5 rounded bg-primary/10">{{ log.runs }}</span> /
-                            <span>{{ log.balls_faced }}</span> /
-                            <span class="text-on-surface-variant">{{ log.ones }}x1</span> /
-                            <span class="text-on-surface-variant">{{ log.twos }}x2</span> /
-                            <span class="text-tertiary">{{ log.fours }}x4</span> /
-                            <span class="text-secondary">{{ log.sixes }}x6</span>
+                            <span class="font-headline font-black text-on-surface text-base">{{ log.runs }}</span> 
+                            <span class="text-[10px] opacity-60">runs</span> ·
+                            <span class="font-medium text-xs">{{ log.balls_faced }}b</span> · 
+                            <span class="text-tertiary font-bold">{{ log.fours }}x4</span> · 
+                            <span class="text-secondary font-bold">{{ log.sixes }}x6</span>
+                            {% if log.not_out %}<span class="ml-2 text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-black uppercase tracking-tighter italic">Not Out</span>{% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">
-                            {{ log.overs_bowled }} / {{ log.maidens }} / {{ log.runs_conceded }} / <span class="font-bold text-error">{{ log.wickets }}W</span>
+                            <span class="font-medium">{{ log.overs_bowled }}ov</span> · 
+                            <span>{{ log.runs_conceded }}r</span> · 
+                            <span class="font-headline font-black text-error text-base">{{ log.wickets }}</span> 
+                            <span class="text-[10px] text-error uppercase font-black">Wkts</span>
                         </td>
                     </tr>
                     {% else %}

@@ -2,141 +2,209 @@
 {% block title %}Leaderboards — SHC STATS{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-10">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-12">
 
     <!-- Page Title -->
-    <div class="mb-2">
+    <div class="mb-4">
         <div class="flex items-center gap-2 mb-1">
-            <span class="w-8 h-1 bg-tertiary rounded-full"></span>
-            <span class="font-headline font-bold uppercase tracking-[0.2em] text-xs text-tertiary">Rankings</span>
+            <span class="w-8 h-1 bg-primary rounded-full"></span>
+            <span class="font-headline font-bold uppercase tracking-[0.2em] text-xs text-primary">Rankings</span>
         </div>
         <h2 class="text-4xl font-headline font-black tracking-tight text-on-surface">LEADERBOARDS</h2>
     </div>
 
-    <!-- Top Run Scorers -->
-    <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden">
-        <div class="flex items-center gap-3 px-6 py-5 border-b border-outline-variant/20">
-            <div class="bg-primary/10 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-primary">sports_cricket</span>
+    <!-- Main Categories Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Top Run Scorers -->
+        <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden border border-outline-variant/10">
+            <div class="flex items-center justify-between px-6 py-5 border-b border-outline-variant/20 bg-primary/5">
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary/10 p-2 rounded-lg">
+                        <span class="material-symbols-outlined text-primary">sports_cricket</span>
+                    </div>
+                    <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Top Run Scorers</h3>
+                </div>
             </div>
-            <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Top Run Scorers</h3>
-        </div>
-        <div class="overflow-x-auto w-full">
-            <table class="min-w-full">
-                <thead>
-                    <tr class="border-b border-outline-variant/20">
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] w-16">Rank</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Player</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Inn</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Runs</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">HS</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">SR</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Avg</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">50s/30s</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for l in runs_leaders %}
-                    <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors {% if logged_in_player_id == l.player_id %}bg-primary/20 border-l-4 border-l-primary scale-[1.01] shadow-lg relative z-10{% elif loop.index <= 3 %}bg-primary/5{% endif %}">
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            {% if loop.index == 1 %}
-                            <span class="text-2xl">🥇</span>
-                            {% elif loop.index == 2 %}
-                            <span class="text-2xl">🥈</span>
-                            {% elif loop.index == 3 %}
-                            <span class="text-2xl">🥉</span>
-                            {% else %}
-                            <span class="font-headline font-black text-on-surface-variant">{{ loop.index }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center gap-3">
-                                {% set img_path = l.players.image_url if (l.players.image_url and l.players.image_url.startswith('/static/')) else player_image_url(l.players.name) %}
-                                {% if img_path %}
-                                <img src="{{ img_path }}" class="w-8 h-8 rounded-xl border border-outline-variant/20 object-cover">
-                                {% else %}
-                                <div class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-headline font-black text-sm">{{ l.players.name[0] }}</div>
-                                {% endif %}
-                                <span class="font-headline font-bold uppercase text-sm {% if logged_in_player_id == l.player_id %}text-on-surface tracking-wider{% else %}text-primary{% endif %}">{{ l.players.name }} {% if logged_in_player_id == l.player_id %}(YOU){% endif %}</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.innings_batted | default(l.matches) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-headline font-black text-on-surface">{{ l.runs }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-headline font-bold text-on-surface-variant">{{ l.highest_score if l.highest_score else 0 }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-headline font-bold text-secondary">
-                            {% if l.balls_faced %}{{ "%.1f"|format((l.runs / l.balls_faced) * 100) }}{% else %}0.0{% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">
-                            {% if l.dismissals and l.dismissals > 0 %}{{ "%.1f"|format(l.runs/l.dismissals) }}{% else %}{{ "%.1f"|format(l.runs | default(0)) }}{% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.fifties }} / {{ l.thirties }}</td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="7" class="px-6 py-12 text-center text-sm text-on-surface-variant">No data yet</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-outline-variant/20">
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] w-16">Rank</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Player</th>
+                            <th class="px-6 py-3 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Matches</th>
+                            <th class="px-6 py-3 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Avg</th>
+                            <th class="px-6 py-3 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">SR</th>
+                            <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Runs</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for l in runs_leaders %}
+                        {% set lp = l.players[0] if l.players is iterable and l.players is not mapping else l.players %}
+                        <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors {% if logged_in_player_id == l.player_id %}bg-primary/10 border-l-4 border-l-primary{% endif %}">
+                            <td class="px-6 py-4 whitespace-nowrap text-center font-headline font-black text-on-surface-variant">
+                                {{ loop.index }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center gap-3">
+                                    {% set img_path = lp.image_url if (lp.image_url and lp.image_url.startswith('/static/')) else player_image_url(lp.name) %}
+                                    <div class="w-8 h-8 rounded-lg overflow-hidden border border-outline-variant/20">
+                                        {% if img_path %}<img src="{{ img_path }}" class="w-full h-full object-cover">
+                                        {% else %}<div class="w-full h-full bg-primary/10 flex items-center justify-center text-primary text-[10px]">{{ lp.name[0] }}</div>{% endif %}
+                                    </div>
+                                    <span class="font-headline font-bold uppercase text-xs">{{ lp.name }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-xs text-on-surface-variant">{{ l.matches }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-xs font-bold text-on-surface">
+                                {% if l.dismissals and l.dismissals > 0 %}{{ "%.1f"|format(l.runs/l.dismissals) }}{% else %}{{ l.runs | default(0) }}{% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-xs font-bold text-secondary">
+                                {% if l.balls_faced %}{{ "%.1f"|format((l.runs / l.balls_faced) * 100) }}{% else %}0.0{% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-headline font-black text-primary">{{ l.runs }}</td>
+                        </tr>
+{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-    <!-- Top Wicket Takers -->
-    <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden">
-        <div class="flex items-center gap-3 px-6 py-5 border-b border-outline-variant/20">
-            <div class="bg-secondary/10 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-secondary">adjust</span>
+        <!-- Top Wicket Takers -->
+        <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden border border-outline-variant/10">
+            <div class="flex items-center justify-between px-6 py-5 border-b border-outline-variant/20 bg-secondary/5">
+                <div class="flex items-center gap-3">
+                    <div class="bg-secondary/10 p-2 rounded-lg">
+                        <span class="material-symbols-outlined text-secondary">adjust</span>
+                    </div>
+                    <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Top Wicket Takers</h3>
+                </div>
             </div>
-            <h3 class="font-headline font-bold text-lg uppercase tracking-wider">Top Wicket Takers</h3>
-        </div>
-        <div class="overflow-x-auto w-full">
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-outline-variant/20">
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] w-16">Rank</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Player</th>
+                            <th class="px-6 py-3 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Matches</th>
+                            <th class="px-6 py-3 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Econ</th>
+                            <th class="px-6 py-3 text-right text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Wickets</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for l in wickets_leaders %}
+                        {% set lp = l.players[0] if l.players is iterable and l.players is not mapping else l.players %}
+                        <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors {% if logged_in_player_id == l.player_id %}bg-secondary/10 border-l-4 border-l-secondary{% endif %}">
+                            <td class="px-6 py-4 whitespace-nowrap text-center font-headline font-black text-on-surface-variant">
+                                {{ loop.index }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center gap-3">
+                                    {% set img_path = lp.image_url if (lp.image_url and lp.image_url.startswith('/static/')) else player_image_url(lp.name) %}
+                                    <div class="w-8 h-8 rounded-lg overflow-hidden border border-outline-variant/20">
+                                        {% if img_path %}<img src="{{ img_path }}" class="w-full h-full object-cover">
+                                        {% else %}<div class="w-full h-full bg-secondary/10 flex items-center justify-center text-secondary text-[10px]">{{ lp.name[0] }}</div>{% endif %}
+                                    </div>
+                                    <span class="font-headline font-bold uppercase text-xs">{{ lp.name }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-xs text-on-surface-variant">{{ l.matches }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-xs font-bold text-error">
+                                {% if l.overs_bowled %}{{ "%.2f"|format(l.runs_conceded/l.overs_bowled) }}{% else %}0.00{% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-headline font-black text-secondary">{{ l.wickets }}</td>
+                        </tr>
+{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Power Hitters Section (4s & 6s) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Most Sixes -->
+        <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden border border-outline-variant/10">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-outline-variant/20 bg-error/5">
+                <span class="material-symbols-outlined text-error">rocket_launch</span>
+                <h3 class="font-headline font-bold text-base uppercase tracking-wider">Most Sixes</h3>
+            </div>
             <table class="min-w-full">
-                <thead>
-                    <tr class="border-b border-outline-variant/20">
-                        <th class="px-6 py-3 text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] w-16">Rank</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Player</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Matches</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Wickets</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">O/M/R/W</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Econ</th>
-                    </tr>
-                </thead>
                 <tbody>
-                    {% for l in wickets_leaders %}
-                    <tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors {% if logged_in_player_id == l.player_id %}bg-secondary/20 border-l-4 border-l-secondary scale-[1.01] shadow-lg relative z-10{% elif loop.index <= 3 %}bg-secondary/5{% endif %}">
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            {% if loop.index == 1 %}
-                            <span class="text-2xl">🥇</span>
-                            {% elif loop.index == 2 %}
-                            <span class="text-2xl">🥈</span>
-                            {% elif loop.index == 3 %}
-                            <span class="text-2xl">🥉</span>
-                            {% else %}
-                            <span class="font-headline font-black text-on-surface-variant">{{ loop.index }}</span>
-                            {% endif %}
+                    {% for l in sixes_leaders[:5] %}
+                    {% set lp = l.players[0] if l.players is iterable and l.players is not mapping else l.players %}
+                    <tr class="border-b border-outline-variant/10 group">
+                        <td class="px-6 py-3 flex items-center gap-3">
+                            <span class="text-xs font-black text-outline group-hover:text-error transition-colors w-4">{{ loop.index }}</span>
+                            <span class="font-headline font-bold uppercase text-[11px]">{{ lp.name }}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center gap-3">
-                                {% set img_path = l.players.image_url if (l.players.image_url and l.players.image_url.startswith('/static/')) else player_image_url(l.players.name) %}
-                                {% if img_path %}
-                                <img src="{{ img_path }}" class="w-8 h-8 rounded-xl border border-outline-variant/20 object-cover">
-                                {% else %}
-                                <div class="w-8 h-8 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary font-headline font-black text-sm">{{ l.players.name[0] }}</div>
-                                {% endif %}
-                                <span class="font-headline font-bold uppercase text-sm {% if logged_in_player_id == l.player_id %}text-on-surface tracking-wider{% else %}text-secondary{% endif %}">{{ l.players.name }} {% if logged_in_player_id == l.player_id %}(YOU){% endif %}</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.matches }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-headline font-black text-on-surface">{{ l.wickets }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-on-surface-variant">{{ l.overs_bowled }} / {{ l.maidens }} / {{ l.runs_conceded }} / {{ l.wickets }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-headline font-bold text-secondary">
-                            {% if l.overs_bowled %}{{ "%.2f"|format(l.runs_conceded/l.overs_bowled) }}{% else %}0.00{% endif %}
+                        <td class="px-6 py-3 text-right">
+                            <span class="font-headline font-black text-error">{{ l.sixes }}</span>
                         </td>
                     </tr>
-                    {% else %}
-                    <tr><td colspan="7" class="px-6 py-12 text-center text-sm text-on-surface-variant">No data yet</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-    </section>
+        </section>
+
+        <!-- Most Fours -->
+        <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden border border-outline-variant/10">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-outline-variant/20 bg-tertiary/5">
+                <span class="material-symbols-outlined text-tertiary">bolt</span>
+                <h3 class="font-headline font-bold text-base uppercase tracking-wider">Most Fours</h3>
+            </div>
+            <table class="min-w-full">
+                <tbody>
+                    {% for l in fours_leaders[:5] %}
+                    {% set lp = l.players[0] if l.players is iterable and l.players is not mapping else l.players %}
+                    <tr class="border-b border-outline-variant/10 group">
+                        <td class="px-6 py-3 flex items-center gap-3">
+                            <span class="text-xs font-black text-outline group-hover:text-tertiary transition-colors w-4">{{ loop.index }}</span>
+                            <span class="font-headline font-bold uppercase text-[11px]">{{ lp.name }}</span>
+                        </td>
+                        <td class="px-6 py-3 text-right">
+                            <span class="font-headline font-black text-tertiary">{{ l.fours }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <!-- Running & Strategy Section (1s, 2s, MOTM) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Most 2s -->
+        <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden border border-outline-variant/10">
+            <div class="px-6 py-4 border-b border-outline-variant/20 bg-surface-container">
+                <h3 class="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant text-center">Doubles Artist (2s)</h3>
+            </div>
+            <div class="p-4 space-y-3">
+                {% for l in twos_leaders[:3] %}
+                {% set lp = l.players[0] if l.players is iterable and l.players is not mapping else l.players %}
+                <div class="flex items-center justify-between p-2 rounded-xl bg-surface hover:bg-surface-bright transition-colors">
+                    <span class="font-headline font-bold text-[10px] uppercase truncate w-24">{{ lp.name }}</span>
+                    <span class="font-headline font-black text-sm text-secondary">{{ l.twos }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Most 1s -->
+        <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden border border-outline-variant/10">
+            <div class="px-6 py-4 border-b border-outline-variant/20 bg-surface-container">
+                <h3 class="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant text-center">Strike Rotators (1s)</h3>
+            </div>
+            <div class="p-4 space-y-3">
+                {% for l in ones_leaders[:3] %}
+                {% set lp = l.players[0] if l.players is iterable and l.players is not mapping else l.players %}
+                <div class="flex items-center justify-between p-2 rounded-xl bg-surface hover:bg-surface-bright transition-colors">
+                    <span class="font-headline font-bold text-[10px] uppercase truncate w-24">{{ lp.name }}</span>
+                    <span class="font-headline font-black text-sm text-on-surface-variant">{{ l.ones }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+    </div>
 </div>
 {% endblock %}

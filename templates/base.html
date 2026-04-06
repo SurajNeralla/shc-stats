@@ -175,16 +175,12 @@
             <a href="{{ url_for('leaderboard') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'leaderboard' %}nav-link-active{% else %}nav-link{% endif %}">
                 Leaderboard
             </a>
-            <a href="{{ url_for('match_history') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'match_history' %}nav-link-active{% else %}nav-link{% endif %}">
-                History
+            <a href="{{ url_for('compare_players_page') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'compare_players_page' %}nav-link-active{% else %}nav-link{% endif %}">
+                Compare
             </a>
             {% if session.get('admin_token') %}
             <a href="{{ url_for('new_player') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'new_player' %}nav-link-active{% else %}nav-link{% endif %}">
                 Add Player
-            </a>
-            <a href="{{ url_for('live_match_setup') }}" class="px-3 py-4 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'live_match_setup' %}text-[#ff7351] border-b-2 border-[#ff7351]{% else %}nav-link{% endif %}">
-                <span class="material-symbols-outlined text-sm align-middle mr-0.5" style="font-size:16px">sports_cricket</span>
-                Live Match
             </a>
             {% endif %}
         </div>
