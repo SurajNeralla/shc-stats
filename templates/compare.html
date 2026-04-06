@@ -25,10 +25,10 @@
                     <!-- Player 1 -->
                     <div class="space-y-2">
                         <label class="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Contender A</label>
-                        <select id="player1-select" class="w-full bg-surface-bright border-none text-on-surface p-4 rounded-xl font-headline font-bold uppercase text-xs focus:ring-2 focus:ring-primary/50 transition-all">
-                            <option value="">Select Player...</option>
+                        <select id="player1-select" class="w-full bg-[#1a1a1a] border-none text-white p-4 rounded-xl font-headline font-bold uppercase text-xs focus:ring-2 focus:ring-primary/50 transition-all cursor-pointer">
+                            <option value="" class="bg-[#1a1a1a] text-white">Select Player...</option>
                             {% for p in players %}
-                            <option value="{{ p.id }}">{{ p.name }} ({{ p.team }})</option>
+                            <option value="{{ p.id }}" class="bg-[#1a1a1a] text-white">{{ p.name }} ({{ p.team }})</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -36,10 +36,10 @@
                     <!-- Player 2 -->
                     <div class="space-y-2">
                         <label class="text-[10px] font-black uppercase tracking-[0.2em] text-secondary">Contender B</label>
-                        <select id="player2-select" class="w-full bg-surface-bright border-none text-on-surface p-4 rounded-xl font-headline font-bold uppercase text-xs focus:ring-2 focus:ring-secondary/50 transition-all">
-                            <option value="">Select Player...</option>
+                        <select id="player2-select" class="w-full bg-[#1a1a1a] border-none text-white p-4 rounded-xl font-headline font-bold uppercase text-xs focus:ring-2 focus:ring-secondary/50 transition-all cursor-pointer">
+                            <option value="" class="bg-[#1a1a1a] text-white">Select Player...</option>
                             {% for p in players %}
-                            <option value="{{ p.id }}">{{ p.name }} ({{ p.team }})</option>
+                            <option value="{{ p.id }}" class="bg-[#1a1a1a] text-white">{{ p.name }} ({{ p.team }})</option>
                             {% endfor %}
                         </select>
                     </div>
