@@ -24,7 +24,7 @@ app.permanent_session_lifetime = timedelta(days=30)
 _NAME_IMAGE_MAP = {
     'suraj':   '/static/images/suraj.jpg.jpeg',
     'sashank': '/static/images/sashank.jpeg',
-    'saran':   '/static/images/saran.jpeg',
+    'saran':   '/static/images/saran2.png',
     'abhi':    '/static/images/abhi.jpeg',
     'deepu':   '/static/images/deepu.jpeg',
     'kl':      '/static/images/deepu.jpeg',

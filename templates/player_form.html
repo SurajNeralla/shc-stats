@@ -49,7 +49,8 @@
                         <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Player Photo</label>
                         <div class="flex items-center gap-4">
                             <img id="img-preview" src="{{ player.image_url if player and player.image_url else '' }}" alt="Preview"
-                                class="h-16 w-16 rounded-xl object-cover border border-outline-variant/20 bg-surface-bright {% if not (player and player.image_url) %}hidden{% endif %}">
+                                class="h-16 w-16 rounded-xl object-cover border border-outline-variant/20 bg-surface-bright {% if not (player and player.image_url) %}hidden{% endif %}"
+                                onerror="this.classList.add('hidden')">
                             <div class="flex-1 flex flex-col gap-2">
                                 <select name="image_url" id="image-select" onchange="updatePreview(this.value)"
                                     class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all">
@@ -57,7 +58,7 @@
                                     {% set images = [
                                         ('suraj.jpg.jpeg',  'Suraj'),
                                         ('sashank.jpeg',    'Sashank'),
-                                        ('saran.jpeg',      'Saran'),
+                                        ('saran2.png',      'Saran'),
                                         ('abhi.jpeg',       'Abhi'),
                                         ('deepu.jpeg',      'Deepu (KL)'),
                                         ('sunny.jpeg',      'Sunny'),
