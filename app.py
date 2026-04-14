@@ -281,6 +281,58 @@ def remove_match(player_id, log_id):
         flash(f"Error deleting match log: {str(e)}", "error")
     return redirect(url_for('edit_player', player_id=player_id))
 
+@app.route('/matches/bulk_new', methods=['GET', 'POST'])
+def add_bulk_match():
+    if not session.get('admin_token'):
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        match_date = request.form.get('match_date')
+        opponent = request.form.get('opponent')
+        player_ids = request.form.getlist('player_ids') # list of checked players
+        
+        success_count = 0
+        error_count = 0
+        
+        for pid in player_ids:
+            match_data = {
+                'match_date': match_date or None,
+                'opponent': opponent,
+                'not_out': request.form.get(f'not_out_{pid}') == 'on',
+                'runs': int(request.form.get(f'runs_{pid}', 0) or 0),
+                'balls_faced': int(request.form.get(f'balls_faced_{pid}', 0) or 0),
+                'ones': int(request.form.get(f'ones_{pid}', 0) or 0),
+                'twos': int(request.form.get(f'twos_{pid}', 0) or 0),
+                'fours': int(request.form.get(f'fours_{pid}', 0) or 0),
+                'sixes': int(request.form.get(f'sixes_{pid}', 0) or 0),
+                'overs_bowled': float(request.form.get(f'overs_bowled_{pid}', 0) or 0),
+                'maidens': int(request.form.get(f'maidens_{pid}', 0) or 0),
+                'runs_conceded': int(request.form.get(f'runs_conceded_{pid}', 0) or 0),
+                'wickets': int(request.form.get(f'wickets_{pid}', 0) or 0),
+                'no_balls': int(request.form.get(f'no_balls_{pid}', 0) or 0),
+                'wides': int(request.form.get(f'wides_{pid}', 0) or 0),
+                'catches': int(request.form.get(f'catches_{pid}', 0) or 0),
+                'stumpings': int(request.form.get(f'stumpings_{pid}', 0) or 0)
+            }
+            try:
+                add_match_log(pid, match_data)
+                success_count += 1
+            except Exception as e:
+                error_count += 1
+                print(f"Error adding match for {pid}: {e}")
+                
+        if error_count == 0 and success_count > 0:
+            flash(f"Successfully logged match for {success_count} players!", "success")
+        elif success_count > 0:
+            flash(f"Logged match for {success_count} players, but {error_count} failed.", "error")
+        else:
+            flash("No players selected or all failed.", "error")
+            
+        return redirect(url_for('dashboard'))
+
+    players = get_players()
+    return render_template('match_form_bulk.html', players=players)
+
 @app.route('/leaderboard')
 def leaderboard():
     runs_leaders = get_leaderboard_runs()

@@ -195,6 +195,9 @@
             <a href="{{ url_for('new_player') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'new_player' %}nav-link-active{% else %}nav-link{% endif %}">
                 Add Player
             </a>
+            <a href="{{ url_for('add_bulk_match') }}" class="px-3 py-2 text-xs font-bold uppercase tracking-wider {% if request.endpoint == 'add_bulk_match' %}nav-link-active{% else %}nav-link{% endif %}">
+                Log Match
+            </a>
             {% endif %}
         </div>
 
@@ -233,6 +236,10 @@
         <a href="{{ url_for('new_player') }}" class="flex-1 flex flex-col items-center gap-1 {% if request.endpoint == 'new_player' %}text-primary{% else %}text-outline{% endif %}">
             <span class="material-symbols-outlined text-[24px] {% if request.endpoint == 'new_player' %}fill-1{% endif %}">person_add</span>
             <span class="text-[8px] font-black uppercase tracking-tighter">Add</span>
+        </a>
+        <a href="{{ url_for('add_bulk_match') }}" class="flex-1 flex flex-col items-center gap-1 {% if request.endpoint == 'add_bulk_match' %}text-primary{% else %}text-outline{% endif %}">
+            <span class="material-symbols-outlined text-[24px] {% if request.endpoint == 'add_bulk_match' %}fill-1{% endif %}">library_add</span>
+            <span class="text-[8px] font-black uppercase tracking-tighter">Log Match</span>
         </a>
         {% endif %}
     </nav>

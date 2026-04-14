@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}Log Match — Bulk Entry{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <!-- Page Title -->
+    <div class="mb-8">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="w-8 h-1 bg-primary rounded-full"></span>
+            <span class="font-headline font-bold uppercase tracking-[0.2em] text-xs text-primary">Data Entry</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-headline font-black tracking-tight text-on-surface uppercase block truncate">
+            LOG MATCH: SQUAD
+        </h2>
+    </div>
+
+    <!-- Bulk Match Form -->
+    <form action="{{ url_for('add_bulk_match') }}" method="POST" class="space-y-8" id="bulk-match-form">
+        
+        <!-- Global Match Details -->
+        <section class="kinetic-gradient-border p-6 shadow-2xl">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="bg-outline-variant/20 p-2 rounded-lg">
+                    <span class="material-symbols-outlined text-outline">calendar_today</span>
+                </div>
+                <h3 class="font-headline font-bold text-lg uppercase tracking-wider text-surface-tint">Global Match Details</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex flex-col gap-2">
+                    <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Date</label>
+                    <input type="date" name="match_date" required 
+                        class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50 w-full" style="color-scheme: dark;">
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Opponent</label>
+                    <input type="text" name="opponent" required 
+                        class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-outline/50" placeholder="e.g. SHC GLADIATORS">
+                </div>
+            </div>
+        </section>
+
+        <!-- Players Selection & Stats -->
+        <section>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-headline font-bold text-lg uppercase tracking-wider text-on-surface">Select Playing XI</h3>
+                <button type="button" id="select-all-btn" class="text-xs font-bold text-primary hover:text-primary-dim transition-colors uppercase tracking-widest">Select All</button>
+            </div>
+            
+            <div class="space-y-4">
+                {% for p in players %}
+                <div class="bg-surface-container rounded-2xl border border-outline-variant/10 overflow-hidden transition-all duration-300">
+                    <!-- Player Header / Trigger -->
+                    <label class="flex items-center gap-4 p-4 cursor-pointer hover:bg-surface-bright/50 transition-colors w-full">
+                        <div class="flex items-center justify-center w-6 h-6 rounded border-2 border-outline-variant/30 transition-colors group-hover:border-primary/50 shrink-0">
+                            <input type="checkbox" name="player_ids" value="{{ p.id }}" class="opacity-0 absolute w-0 h-0 player-checkbox peer">
+                            <span class="material-symbols-outlined text-[16px] text-primary opacity-0 peer-checked:opacity-100 transition-opacity">check</span>
+                        </div>
+                        <div class="flex items-center gap-3 flex-1">
+                            <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-outline-variant/30">
+                                {% if p.image_url %}
+                                    <img src="{{ p.image_url }}" alt="{{ p.name }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    <img src="{{ player_image_url(p.name) or 'https://ui-avatars.com/api/?name=' + p.name + '&background=262626&color=fff&bold=true' }}" alt="{{ p.name }}" class="w-full h-full object-cover">
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h4 class="font-headline font-bold text-base text-on-surface uppercase">{{ p.name }}</h4>
+                                <p class="text-[10px] uppercase font-bold text-on-surface-variant tracking-widest">{{ p.team }}</p>
+                            </div>
+                        </div>
+                        <span class="material-symbols-outlined text-outline-variant transition-transform duration-300 chevron">expand_more</span>
+                    </label>
+
+                    <!-- Player Stats Form (Hidden by default) -->
+                    <div class="player-stats-panel hidden border-t border-outline-variant/10 bg-surface-container-low p-4 sm:p-6" id="stats-panel-{{ p.id }}">
+                        
+                        <!-- Batting Section -->
+                        <div class="mb-6">
+                            <h5 class="text-xs uppercase font-bold text-primary mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-sm">sports_cricket</span> Batting</h5>
+                            
+                            <div class="mb-4">
+                                <label class="flex items-center gap-2 cursor-pointer group">
+                                    <div class="relative flex items-center justify-center w-5 h-5 rounded border-2 border-outline-variant/30 group-hover:border-primary/50 transition-colors">
+                                        <input type="checkbox" name="not_out_{{ p.id }}" class="opacity-0 absolute inset-0 cursor-pointer peer">
+                                        <span class="material-symbols-outlined text-[14px] text-primary opacity-0 peer-checked:opacity-100 transition-opacity">check</span>
+                                    </div>
+                                    <span class="font-headline font-bold text-xs uppercase tracking-wider text-on-surface-variant group-hover:text-on-surface transition-colors">Not Out</span>
+                                </label>
+                            </div>
+
+                            <div class="grid grid-cols-2 sm:grid-cols-6 gap-3">
+                                {% set batting_fields = [
+                                    ('Runs', 'runs', 'primary'),
+                                    ('Balls', 'balls_faced', 'on-surface'),
+                                    ('1s', 'ones', 'on-surface'),
+                                    ('2s', 'twos', 'on-surface'),
+                                    ('4s', 'fours', 'tertiary'),
+                                    ('6s', 'sixes', 'secondary')
+                                ] %}
+                                {% for label, name, color in batting_fields %}
+                                <div class="flex flex-col gap-1">
+                                    <label class="font-label text-[9px] uppercase font-bold text-on-surface-variant tracking-tighter ml-1">{{ label }}</label>
+                                    <input type="number" name="{{ name }}_{{ p.id }}" value="0" 
+                                        class="bg-surface-bright border-none text-{{ color }} p-3 rounded-lg font-headline font-black text-lg text-center focus:ring-2 focus:ring-{{ color }}/50 transition-all">
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Bowling Section -->
+                        <div class="mb-6 border-t border-outline-variant/10 pt-6">
+                            <h5 class="text-xs uppercase font-bold text-error mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-sm">adjust</span> Bowling</h5>
+                            
+                            <div class="grid grid-cols-2 sm:grid-cols-6 gap-3">
+                                {% set bowling_fields = [
+                                    ('Overs', 'overs_bowled', 'on-surface', '0.1'),
+                                    ('Mdns', 'maidens', 'on-surface', '1'),
+                                    ('Runs', 'runs_conceded', 'error', '1'),
+                                    ('Wkts', 'wickets', 'error', '1'),
+                                    ('NBs', 'no_balls', 'on-surface-variant', '1'),
+                                    ('Wides', 'wides', 'on-surface-variant', '1')
+                                ] %}
+                                {% for label, name, color, step in bowling_fields %}
+                                <div class="flex flex-col gap-1">
+                                    <label class="font-label text-[9px] uppercase font-bold text-on-surface-variant tracking-tighter ml-1">{{ label }}</label>
+                                    <input type="number" step="{{ step }}" name="{{ name }}_{{ p.id }}" value="0" 
+                                        class="bg-surface-bright border-none text-{{ color }} p-3 rounded-lg font-headline font-bold text-base text-center focus:ring-2 focus:ring-error/50 transition-all">
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Fielding Section -->
+                        <div class="border-t border-outline-variant/10 pt-6">
+                            <h5 class="text-xs uppercase font-bold text-tertiary mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-sm">back_hand</span> Fielding</h5>
+                            
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div class="flex flex-col gap-1">
+                                    <label class="font-label text-[9px] uppercase font-bold text-on-surface-variant tracking-tighter ml-1">Catches</label>
+                                    <input type="number" name="catches_{{ p.id }}" value="0" 
+                                        class="bg-surface-bright border-none text-tertiary p-3 rounded-lg font-headline font-black text-lg text-center focus:ring-2 focus:ring-tertiary/50 transition-all">
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <label class="font-label text-[9px] uppercase font-bold text-on-surface-variant tracking-tighter ml-1">Stumpings</label>
+                                    <input type="number" name="stumpings_{{ p.id }}" value="0" 
+                                        class="bg-surface-bright border-none text-tertiary p-3 rounded-lg font-headline font-black text-lg text-center focus:ring-2 focus:ring-tertiary/50 transition-all">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Sticky Submit Footer -->
+        <div class="sticky bottom-0 left-0 w-full bg-surface/90 backdrop-blur-xl p-4 border-t border-outline-variant/20 z-40 transform translate-y-4 opacity-0 transition-all duration-300 pb-24 sm:pb-4" id="submit-footer">
+            <button type="submit" class="w-full sm:w-auto sm:px-12 bg-primary text-on-primary font-headline font-black py-4 rounded-xl text-lg uppercase tracking-widest shadow-[0_10px_30px_rgba(0,252,65,0.3)] hover:scale-[1.02] active:scale-95 transition-all mx-auto block">
+                SAVE SQUAD MATCH
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const checkboxes = document.querySelectorAll('.player-checkbox');
+        const selectAllBtn = document.getElementById('select-all-btn');
+        const submitFooter = document.getElementById('submit-footer');
+
+        function updatePanel(checkbox) {
+            const panel = checkbox.closest('.bg-surface-container').querySelector('.player-stats-panel');
+            const chevron = checkbox.closest('.bg-surface-container').querySelector('.chevron');
+            
+            if (checkbox.checked) {
+                panel.classList.remove('hidden');
+                checkbox.closest('.bg-surface-container').classList.add('border-primary/50', 'ring-1', 'ring-primary/20');
+                chevron.classList.add('rotate-180', 'text-primary');
+            } else {
+                panel.classList.add('hidden');
+                checkbox.closest('.bg-surface-container').classList.remove('border-primary/50', 'ring-1', 'ring-primary/20');
+                chevron.classList.remove('rotate-180', 'text-primary');
+            }
+            updateFooterVisibility();
+        }
+
+        function updateFooterVisibility() {
+            const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+            if (anyChecked) {
+                submitFooter.classList.remove('translate-y-4', 'opacity-0');
+            } else {
+                submitFooter.classList.add('translate-y-4', 'opacity-0');
+            }
+        }
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                updatePanel(cb);
+            });
+            // Initial state
+            updatePanel(cb);
+        });
+
+        selectAllBtn.addEventListener('click', () => {
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => {
+                cb.checked = !allChecked;
+                updatePanel(cb);
+            });
+            selectAllBtn.textContent = allChecked ? "Select All" : "Deselect All";
+        });
+    });
+</script>
+{% endblock %}
