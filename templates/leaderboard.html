@@ -171,40 +171,6 @@
         </section>
     </div>
 
-    <!-- Running & Strategy Section (1s, 2s, MOTM) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <!-- Most 2s -->
-        <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden border border-outline-variant/10">
-            <div class="px-6 py-4 border-b border-outline-variant/20 bg-surface-container">
-                <h3 class="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant text-center">Doubles Artist (2s)</h3>
-            </div>
-            <div class="p-4 space-y-3">
-                {% for l in twos_leaders[:3] %}
-                {% set lp = l.players[0] if l.players is iterable and l.players is not mapping else l.players %}
-                <div class="flex items-center justify-between p-2 rounded-xl bg-surface hover:bg-surface-bright transition-colors">
-                    <span class="font-headline font-bold text-[10px] uppercase truncate w-24">{{ lp.name }}</span>
-                    <span class="font-headline font-black text-sm text-secondary">{{ l.twos }}</span>
-                </div>
-                {% endfor %}
-            </div>
-        </section>
-
-        <!-- Most 1s -->
-        <section class="bg-surface-container-low rounded-[1.5rem] shadow-xl overflow-hidden border border-outline-variant/10">
-            <div class="px-6 py-4 border-b border-outline-variant/20 bg-surface-container">
-                <h3 class="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant text-center">Strike Rotators (1s)</h3>
-            </div>
-            <div class="p-4 space-y-3">
-                {% for l in ones_leaders[:3] %}
-                {% set lp = l.players[0] if l.players is iterable and l.players is not mapping else l.players %}
-                <div class="flex items-center justify-between p-2 rounded-xl bg-surface hover:bg-surface-bright transition-colors">
-                    <span class="font-headline font-bold text-[10px] uppercase truncate w-24">{{ lp.name }}</span>
-                    <span class="font-headline font-black text-sm text-on-surface-variant">{{ l.ones }}</span>
-                </div>
-                {% endfor %}
-            </div>
-        </section>
-
-    </div>
+</div>
 </div>
 {% endblock %}

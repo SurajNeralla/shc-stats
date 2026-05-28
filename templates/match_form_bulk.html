@@ -13,6 +13,84 @@
             LOG MATCH: SQUAD
         </h2>
     </div>
+    
+    <!-- CricHeroes Auto-Filler Utility -->
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <div class="bg-surface-container p-6 rounded-[1.5rem] border border-primary/20 mb-8">
+        <div class="flex items-center justify-between cursor-pointer" id="toggle-parser-btn">
+            <div class="flex items-center gap-3">
+                <div class="bg-primary/20 p-2 rounded-lg text-primary flex items-center justify-center">
+                    <span class="material-symbols-outlined">bolt</span>
+                </div>
+                <div>
+                    <h3 class="font-headline font-bold text-base uppercase tracking-wider text-primary">CricHeroes Auto-Filler</h3>
+                    <p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Paste scorecard tables or upload screenshots to automatically fill player statistics</p>
+                </div>
+            </div>
+            <span class="material-symbols-outlined text-outline-variant transition-transform duration-300" id="parser-chevron">expand_more</span>
+        </div>
+        
+        <div id="parser-body" class="hidden space-y-4 pt-4 border-t border-outline-variant/10 mt-4">
+            <!-- Tabs -->
+            <div class="flex border-b border-outline-variant/20 mb-4">
+                <button type="button" id="tab-text-btn" class="flex-1 py-2 text-xs font-bold uppercase tracking-wider text-primary border-b-2 border-primary transition-all">
+                    📋 Paste Text
+                </button>
+                <button type="button" id="tab-image-btn" class="flex-1 py-2 text-xs font-bold uppercase tracking-wider text-outline border-b-2 border-transparent hover:text-on-surface-variant transition-all">
+                    📷 Upload Screenshots
+                </button>
+            </div>
+
+            <!-- Tab 1: Paste Text -->
+            <div id="panel-text" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Batting Scorecard Text</label>
+                        <textarea id="batting-paste" rows="5" class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 placeholder:text-outline/50 w-full text-xs" placeholder="Paste CricHeroes batting table rows here...&#10;e.g. Saran Neralla  c Fielder b Bowler  45  30  4  2  150.00"></textarea>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Bowling Scorecard Text</label>
+                        <textarea id="bowling-paste" rows="5" class="bg-surface-bright border-none text-on-surface p-4 rounded-xl font-medium focus:ring-2 focus:ring-primary/50 placeholder:text-outline/50 w-full text-xs" placeholder="Paste CricHeroes bowling table rows here...&#10;e.g. Suraj Neralla  4.0  0  25  2  6.25"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Upload Screenshots -->
+            <div id="panel-image" class="hidden space-y-4">
+                <div class="flex flex-col gap-2">
+                    <label class="font-label text-xs uppercase font-bold text-on-surface-variant tracking-widest ml-1">Upload Scorecard Screenshots</label>
+                    <div class="border-2 border-dashed border-outline-variant/30 rounded-xl p-6 flex flex-col items-center justify-center bg-surface-bright/30 hover:bg-surface-bright/50 transition-all cursor-pointer relative" id="drop-zone">
+                        <input type="file" id="screenshot-upload" multiple accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <span class="material-symbols-outlined text-4xl text-outline mb-2">add_a_photo</span>
+                        <span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Drag & drop or click to upload multiple images</span>
+                        <span class="text-[10px] text-outline mt-1 uppercase" id="upload-status">No files selected</span>
+                    </div>
+                </div>
+                
+                <!-- OCR Progress Indicator -->
+                <div id="ocr-progress-container" class="hidden bg-surface-bright/30 p-4 rounded-xl space-y-2 border border-outline-variant/10">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-secondary">
+                        <span id="ocr-status-text">Processing images...</span>
+                        <span id="ocr-percent-text">0%</span>
+                    </div>
+                    <div class="w-full bg-surface-bright h-2 rounded-full overflow-hidden">
+                        <div id="ocr-progress-bar" class="bg-secondary h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4">
+                <button type="button" id="parse-fill-btn" class="flex-1 bg-primary text-on-primary font-headline font-black py-3 rounded-xl text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all">
+                    FILL STATS
+                </button>
+                <button type="button" id="parse-clear-btn" class="bg-surface-bright text-on-surface font-headline font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-widest hover:bg-surface-variant transition-all">
+                    CLEAR
+                </button>
+            </div>
+            <div id="parser-feedback" class="text-xs text-secondary font-semibold hidden uppercase tracking-wider mt-2"></div>
+        </div>
+    </div>
 
     <!-- Bulk Match Form -->
     <form action="{{ url_for('add_bulk_match') }}" method="POST" class="space-y-8" id="bulk-match-form">
@@ -88,12 +166,10 @@
                                 </label>
                             </div>
 
-                            <div class="grid grid-cols-2 sm:grid-cols-6 gap-3">
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 {% set batting_fields = [
                                     ('Runs', 'runs', 'primary'),
                                     ('Balls', 'balls_faced', 'on-surface'),
-                                    ('1s', 'ones', 'on-surface'),
-                                    ('2s', 'twos', 'on-surface'),
                                     ('4s', 'fours', 'tertiary'),
                                     ('6s', 'sixes', 'secondary')
                                 ] %}
@@ -212,6 +288,553 @@
             });
             selectAllBtn.textContent = allChecked ? "Select All" : "Deselect All";
         });
+
+        // Toggle CricHeroes Parser UI
+        const toggleParserBtn = document.getElementById('toggle-parser-btn');
+        const parserBody = document.getElementById('parser-body');
+        const parserChevron = document.getElementById('parser-chevron');
+        
+        toggleParserBtn.addEventListener('click', () => {
+            parserBody.classList.toggle('hidden');
+            parserChevron.classList.toggle('rotate-180');
+        });
+
+        // Tab switching
+        const tabTextBtn = document.getElementById('tab-text-btn');
+        const tabImageBtn = document.getElementById('tab-image-btn');
+        const panelText = document.getElementById('panel-text');
+        const panelImage = document.getElementById('panel-image');
+        
+        tabTextBtn.addEventListener('click', () => {
+            tabTextBtn.classList.add('text-primary', 'border-primary');
+            tabTextBtn.classList.remove('text-outline', 'border-transparent');
+            tabImageBtn.classList.remove('text-primary', 'border-primary');
+            tabImageBtn.classList.add('text-outline', 'border-transparent');
+            panelText.classList.remove('hidden');
+            panelImage.classList.add('hidden');
+        });
+        
+        tabImageBtn.addEventListener('click', () => {
+            tabImageBtn.classList.add('text-primary', 'border-primary');
+            tabImageBtn.classList.remove('text-outline', 'border-transparent');
+            tabTextBtn.classList.remove('text-primary', 'border-primary');
+            tabTextBtn.classList.add('text-outline', 'border-transparent');
+            panelImage.classList.remove('hidden');
+            panelText.classList.add('hidden');
+        });
+
+        // Helper to set input value and trigger change/input events
+        function setValueByName(name, value) {
+            const input = document.querySelector(`input[name="${name}"]`);
+            if (input) {
+                input.value = value;
+                input.dispatchEvent(new Event('input'));
+                input.dispatchEvent(new Event('change'));
+            }
+        }
+
+        // Sørensen-Dice string similarity coefficient
+        function getStringSimilarity(str1, str2) {
+            const s1 = str1.replace(/\s+/g, '').toLowerCase();
+            const s2 = str2.replace(/\s+/g, '').toLowerCase();
+            
+            if (s1 === s2) return 1.0;
+            if (s1.length < 2 || s2.length < 2) return 0.0;
+
+            const bigrams1 = new Set();
+            for (let i = 0; i < s1.length - 1; i++) {
+                bigrams1.add(s1.substring(i, i + 2));
+            }
+
+            const bigrams2 = new Set();
+            for (let i = 0; i < s2.length - 1; i++) {
+                bigrams2.add(s2.substring(i, i + 2));
+            }
+
+            let intersection = 0;
+            for (const bigram of bigrams1) {
+                if (bigrams2.has(bigram)) {
+                    intersection++;
+                }
+            }
+
+            return (2.0 * intersection) / (bigrams1.size + bigrams2.size);
+        }
+
+        // Fuzzy Name Matcher with 80% similarity threshold
+        function findMatchingPlayer(line, playersList) {
+            let lowerLine = line.trim().toLowerCase();
+            if (!lowerLine) return null;
+            
+            // 1. Full name exact check
+            for (const p of playersList) {
+                if (lowerLine.includes(p.name)) {
+                    return p;
+                }
+            }
+            
+            // 2. Similarity threshold check (80% or greater)
+            let bestMatch = null;
+            // Strip captain/wk markers and trailing * from line before matching
+            lowerLine = lowerLine
+                .replace(/\(c\)/gi, '')
+                .replace(/\(wk\)/gi, '')
+                .replace(/\(c\/wk\)/gi, '')
+                .replace(/\*/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            let highestSimilarity = 0;
+            const threshold = 0.8;
+            
+            for (const p of playersList) {
+                const pWords = p.name.split(/\s+/);
+                const pWordCount = pWords.length;
+                
+                // Clean line words
+                const lineWords = lowerLine.replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 1);
+                
+                for (let i = 0; i <= lineWords.length - pWordCount; i++) {
+                    const subSequence = lineWords.slice(i, i + pWordCount).join(' ');
+                    const similarity = getStringSimilarity(subSequence, p.name);
+                    if (similarity > highestSimilarity && similarity >= threshold) {
+                        highestSimilarity = similarity;
+                        bestMatch = p;
+                    }
+                }
+            }
+            
+            if (bestMatch) {
+                return bestMatch;
+            }
+            
+            // 3. Initial + Last Name check fallback (e.g., "s neralla" or "s. neralla")
+            for (const p of playersList) {
+                const parts = p.name.split(/\s+/);
+                if (parts.length > 1) {
+                    const initial = parts[0][0];
+                    const lastName = parts[parts.length - 1];
+                    const pattern1 = new RegExp(`\\b${initial}\\b.*${lastName}`);
+                    const pattern2 = new RegExp(`\\b${initial}\\.?${lastName}`);
+                    if (pattern1.test(lowerLine) || pattern2.test(lowerLine)) {
+                        return p;
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        function nameMatchesFielder(playerName, fielderText) {
+            const pParts = playerName.split(/\s+/);
+            if (pParts.every(part => fielderText.includes(part))) return true;
+            if (pParts.length > 1) {
+                const initial = pParts[0][0];
+                const lastName = pParts[pParts.length - 1];
+                if (fielderText.includes(initial) && fielderText.includes(lastName)) return true;
+            }
+            return false;
+        }
+
+        function hasCatchForPlayer(text, playerName) {
+            const match = text.match(/(?:^|\s)(?:c|ct|caught)\s+([^b\d]+)/);
+            if (match) {
+                const fielderText = match[1];
+                return nameMatchesFielder(playerName, fielderText);
+            }
+            return false;
+        }
+
+        function hasStumpingForPlayer(text, playerName) {
+            const match = text.match(/(?:^|\s)(?:st|stumped)\s+([^b\d]+)/);
+            if (match) {
+                const fielderText = match[1];
+                return nameMatchesFielder(playerName, fielderText);
+            }
+            return false;
+        }
+
+        // Main Parser Action Buttons
+        const parseFillBtn = document.getElementById('parse-fill-btn');
+        const parseClearBtn = document.getElementById('parse-clear-btn');
+        const feedbackDiv = document.getElementById('parser-feedback');
+        
+        parseClearBtn.addEventListener('click', () => {
+            document.getElementById('batting-paste').value = '';
+            document.getElementById('bowling-paste').value = '';
+            document.getElementById('screenshot-upload').value = '';
+            uploadStatus.textContent = 'No files selected';
+            feedbackDiv.classList.add('hidden');
+            feedbackDiv.textContent = '';
+        });
+
+        parseFillBtn.addEventListener('click', () => {
+            feedbackDiv.classList.add('hidden');
+            
+            // Build player DOM mapping
+            const playerDivs = Array.from(document.querySelectorAll('.bg-surface-container'));
+            const playersList = playerDivs.map(div => {
+                const checkbox = div.querySelector('.player-checkbox');
+                const nameEl = div.querySelector('h4.font-headline');
+                if (!checkbox || !nameEl) return null;
+                return {
+                    id: checkbox.value,
+                    name: nameEl.textContent.trim().toLowerCase(),
+                    element: div,
+                    checkbox: checkbox
+                };
+            }).filter(Boolean);
+
+            const battingText = document.getElementById('batting-paste').value;
+            const bowlingText = document.getElementById('bowling-paste').value;
+            
+            let matchedBatters = 0;
+            let matchedBowlers = 0;
+            let matchedFielders = 0;
+            
+            // Dismissal line detector — skip lines like "c Sunny b Saran"
+            const isDismissalLine = (line) => /^\s*(c\s|ct\s|caught\s|b\s|bowled\s|st\s|stumped\s|lbw|run\s*out|hit\s*wicket|retired)/i.test(line);
+
+            // Parse Batting
+            const battingLines = battingText.split('\n');
+            battingLines.forEach(line => {
+                const cleanLine = line.trim();
+                if (!cleanLine) return;
+                
+                // Skip dismissal description lines (no stats on them)
+                if (isDismissalLine(cleanLine)) return;
+
+                const matchedPlayer = findMatchingPlayer(cleanLine, playersList);
+                if (!matchedPlayer) return;
+                
+                // Extract numbers
+                const numberMatches = cleanLine.match(/\d+(?:\.\d+)?/g);
+                if (!numberMatches || numberMatches.length < 2) return; // need at least runs + balls
+                const numbers = numberMatches.map(Number);
+                
+                // Batting column order (Cricheros): R  B  [1s  2s]  4s  6s  SR  [pos]
+                // Use LEFT-TO-RIGHT indexing — strip trailing extras, then index directly.
+                
+                // Step 1: Strip trailing INTEGER position column (always last if ≥7 numbers)
+                if (numbers.length >= 7 && Number.isInteger(numbers[numbers.length - 1])) {
+                    numbers.pop();
+                }
+                
+                // Step 2: Strip Strike Rate — last value (float or if ≥5 remaining)
+                if (numbers.length > 0 && (!Number.isInteger(numbers[numbers.length - 1]) || numbers.length >= 5)) {
+                    numbers.pop();
+                }
+                
+                // Remaining numbers left-to-right:
+                //   6 cols → [R, B, 1s, 2s, 4s, 6s]
+                //   4 cols → [R, B, 4s, 6s]
+                //   2 cols → [R, B]
+                let runs = 0, balls = 0, fours = 0, sixes = 0;
+                if (numbers.length >= 6) {
+                    // Full Cricheros format with 1s and 2s columns
+                    runs  = numbers[0]; // R
+                    balls = numbers[1]; // B
+                    // numbers[2] = 1s (skip)
+                    // numbers[3] = 2s (skip)
+                    fours = numbers[4]; // 4s
+                    sixes = numbers[5]; // 6s
+                } else if (numbers.length >= 4) {
+                    runs  = numbers[0]; // R
+                    balls = numbers[1]; // B
+                    fours = numbers[2]; // 4s
+                    sixes = numbers[3]; // 6s
+                } else {
+                    if (numbers.length >= 1) runs  = numbers[0];
+                    if (numbers.length >= 2) balls = numbers[1];
+                }
+                
+                const lowerLine = cleanLine.toLowerCase();
+                const isNotOut = lowerLine.includes('not out') || lowerLine.includes('*') || lowerLine.includes('notout');
+                
+                const pid = matchedPlayer.id;
+                
+                // Select/check player
+                matchedPlayer.checkbox.checked = true;
+                updatePanel(matchedPlayer.checkbox);
+                
+                setValueByName(`runs_${pid}`, runs);
+                setValueByName(`balls_faced_${pid}`, balls);
+                setValueByName(`fours_${pid}`, fours);
+                setValueByName(`sixes_${pid}`, sixes);
+                
+                const notOutCheckbox = document.querySelector(`input[name="not_out_${pid}"]`);
+                if (notOutCheckbox) {
+                    notOutCheckbox.checked = isNotOut;
+                    notOutCheckbox.dispatchEvent(new Event('change'));
+                }
+                
+                matchedBatters++;
+            });
+
+            // Parse Fielding (catches & stumpings) from the batting text (opponent's card)
+            playersList.forEach(p => {
+                let catches = 0;
+                let stumpings = 0;
+                
+                battingLines.forEach(line => {
+                    const lowerLine = line.toLowerCase();
+                    if (lowerLine.includes(p.name)) {
+                        const batsmanNameRemoved = lowerLine.replace(p.name, '');
+                        if (hasCatchForPlayer(batsmanNameRemoved, p.name)) catches++;
+                        if (hasStumpingForPlayer(batsmanNameRemoved, p.name)) stumpings++;
+                    } else {
+                        if (hasCatchForPlayer(lowerLine, p.name)) catches++;
+                        if (hasStumpingForPlayer(lowerLine, p.name)) stumpings++;
+                    }
+                });
+                
+                if (catches > 0 || stumpings > 0) {
+                    p.checkbox.checked = true;
+                    updatePanel(p.checkbox);
+                    
+                    if (catches > 0) {
+                        setValueByName(`catches_${p.id}`, catches);
+                    }
+                    if (stumpings > 0) {
+                        setValueByName(`stumpings_${p.id}`, stumpings);
+                    }
+                    matchedFielders++;
+                }
+            });
+
+            // Parse Bowling
+            const bowlingLines = bowlingText.split('\n');
+            bowlingLines.forEach(line => {
+                const cleanLine = line.trim();
+                if (!cleanLine) return;
+                
+                const matchedPlayer = findMatchingPlayer(cleanLine, playersList);
+                if (!matchedPlayer) return;
+                
+                const numberMatches = cleanLine.match(/\d+(?:\.\d+)?/g);
+                if (!numberMatches) return;
+                const numbers = numberMatches.map(Number);
+                
+                // Bowling column order (Cricheros): O  M  R  W  Eco
+                // Use LEFT-TO-RIGHT indexing — the column order is always fixed.
+                
+                // Step 1: Strip trailing Economy Rate.
+                // Economy is always last — remove it if it's a float,
+                // or if we have more than 4 numbers left (means extra columns present).
+                while (numbers.length > 4) {
+                    numbers.pop(); // remove extra trailing columns (Eco, NB, Wides, etc.)
+                }
+                // Also remove the last value if it's a float (e.g. 5.67 Eco)
+                if (numbers.length > 0 && !Number.isInteger(numbers[numbers.length - 1])) {
+                    numbers.pop();
+                }
+                
+                // Step 2: Read left-to-right — index 0=O, 1=M, 2=R, 3=W
+                const overs        = numbers.length >= 1 ? numbers[0] : 0;
+                const maidens      = numbers.length >= 2 ? numbers[1] : 0;
+                const runsConceded = numbers.length >= 3 ? numbers[2] : 0;
+                const wickets      = numbers.length >= 4 ? numbers[3] : 0;
+                const noBalls      = 0;
+                const wides        = 0;
+                
+                // Normalize overs (e.g. 30 -> 3.0, 40 -> 4.0, 12 -> 1.2 due to OCR missing the dot)
+                if (overs >= 6) {
+                    overs = parseFloat((overs / 10).toFixed(1));
+                }
+                
+                const pid = matchedPlayer.id;
+                
+                // Select/check player
+                matchedPlayer.checkbox.checked = true;
+                updatePanel(matchedPlayer.checkbox);
+                
+                setValueByName(`overs_bowled_${pid}`, overs);
+                setValueByName(`maidens_${pid}`, maidens);
+                setValueByName(`runs_conceded_${pid}`, runsConceded);
+                setValueByName(`wickets_${pid}`, wickets);
+                setValueByName(`no_balls_${pid}`, noBalls);
+                setValueByName(`wides_${pid}`, wides);
+                
+                matchedBowlers++;
+            });
+
+            feedbackDiv.classList.remove('hidden');
+            feedbackDiv.textContent = `Auto-filled stats for: ${matchedBatters} Batters, ${matchedBowlers} Bowlers, and credited ${matchedFielders} Fielders.`;
+            
+            // Scroll to the playing XI section to view filled stats
+            document.querySelector('section h3.font-headline').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // OCR Image upload handling
+        const screenshotUpload = document.getElementById('screenshot-upload');
+        const uploadStatus = document.getElementById('upload-status');
+        const ocrProgressContainer = document.getElementById('ocr-progress-container');
+        const ocrStatusText = document.getElementById('ocr-status-text');
+        const ocrPercentText = document.getElementById('ocr-percent-text');
+        const ocrProgressBar = document.getElementById('ocr-progress-bar');
+        const dropZone = document.getElementById('drop-zone');
+
+        // Drag & drop handlers
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('bg-surface-bright/50', 'border-primary/50');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('bg-surface-bright/50', 'border-primary/50');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                screenshotUpload.files = files;
+                handleFilesSelected(files);
+            }
+        });
+
+        screenshotUpload.addEventListener('change', (e) => {
+            handleFilesSelected(e.target.files);
+        });
+
+        async function handleFilesSelected(files) {
+            if (files.length === 0) return;
+            
+            uploadStatus.textContent = `${files.length} file(s) selected`;
+            ocrProgressContainer.classList.remove('hidden');
+            ocrStatusText.textContent = "Initializing OCR engine...";
+            ocrPercentText.textContent = "0%";
+            ocrProgressBar.style.width = "0%";
+            
+            try {
+                // Initialize Tesseract worker
+                const worker = await Tesseract.createWorker('eng', 1, {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const progress = Math.round(m.progress * 100);
+                            ocrStatusText.textContent = `Analyzing image content...`;
+                            ocrPercentText.textContent = `${progress}%`;
+                            ocrProgressBar.style.width = `${progress}%`;
+                        }
+                    }
+                });
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    ocrStatusText.textContent = `Processing image ${i + 1} of ${files.length} (${file.name})...`;
+                    ocrPercentText.textContent = "0%";
+                    ocrProgressBar.style.width = "0%";
+
+                    const text = await performOcr(worker, file);
+                    classifyAndAppendOcrText(text);
+                }
+
+                await worker.terminate();
+                
+                ocrStatusText.textContent = "OCR processing completed successfully!";
+                ocrPercentText.textContent = "100%";
+                ocrProgressBar.style.width = "100%";
+                
+                // Show feedback and switch back to text view to let them see/confirm
+                setTimeout(() => {
+                    tabTextBtn.click();
+                    ocrProgressContainer.classList.add('hidden');
+                    feedbackDiv.classList.remove('hidden');
+                    feedbackDiv.textContent = "Text extracted from screenshots and populated below! Verify and click 'Fill Stats'.";
+                }, 1500);
+
+            } catch (err) {
+                console.error(err);
+                ocrStatusText.textContent = `Error: ${err.message || err}`;
+                ocrProgressBar.classList.add('bg-error');
+            }
+        }
+
+        function performOcr(worker, file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async () => {
+                    try {
+                        const { data: { text } } = await worker.recognize(reader.result);
+                        resolve(text);
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function classifyAndAppendOcrText(text) {
+            const lines = text.split('\n');
+            let currentMode = 'batting'; // Default to batting
+            
+            let battingLines = [];
+            let bowlingLines = [];
+            
+            // A header-only line for bowling section: the word "bowlers" or "bowling" appearing
+            // with at most 2 other words and no digit-heavy content
+            const bowlingSectionHeaderRe = /^\s*(bowlers?|bowling stats?|bowl)\s*$/i;
+            // Also detect column-header lines that contain bowling column names
+            const bowlingColHeaderRe = /\b(overs?|maiden|econ|eco\.?|wkts?|wickets?)\b/i;
+            const battingColHeaderRe = /\b(batsman|batter|batting|strike\s*rate|\bsr\b|\b4s\b|\b6s\b)\b/i;
+
+            // Dismissal line pattern: starts with "c ", "b ", "st ", "lbw", "run out", "hit wicket", "retired"
+            // These lines have no big stat numbers – they describe how the batsman got out
+            const dismissalRe = /^\s*(c\s|ct\s|caught\s|b\s|bowled\s|st\s|stumped\s|lbw|run\s*out|hit\s*wicket|retired)/i;
+
+            lines.forEach(line => {
+                const cleanLine = line.trim();
+                if (!cleanLine) return;
+                
+                const lowerLine = cleanLine.toLowerCase();
+                
+                // Detect section header / column header to switch mode
+                if (bowlingSectionHeaderRe.test(cleanLine)) {
+                    currentMode = 'bowling';
+                    return; // skip header line itself
+                }
+                if (bowlingColHeaderRe.test(lowerLine) && !battingColHeaderRe.test(lowerLine)) {
+                    // Only switch if this looks like a header (mostly words, few numbers)
+                    const numCount = (lowerLine.match(/\d/g) || []).length;
+                    if (numCount < 3) {
+                        currentMode = 'bowling';
+                        return;
+                    }
+                }
+                if (battingColHeaderRe.test(lowerLine) && !bowlingColHeaderRe.test(lowerLine)) {
+                    const numCount = (lowerLine.match(/\d/g) || []).length;
+                    if (numCount < 3) {
+                        currentMode = 'batting';
+                        return;
+                    }
+                }
+                
+                if (currentMode === 'bowling') {
+                    bowlingLines.push(cleanLine);
+                } else {
+                    // In batting mode, skip dismissal description lines
+                    if (!dismissalRe.test(cleanLine)) {
+                        battingLines.push(cleanLine);
+                    }
+                }
+            });
+            
+            if (battingLines.length > 0) {
+                const area = document.getElementById('batting-paste');
+                area.value += (area.value ? '\n' : '') + battingLines.join('\n');
+            }
+            if (bowlingLines.length > 0) {
+                const area = document.getElementById('bowling-paste');
+                area.value += (area.value ? '\n' : '') + bowlingLines.join('\n');
+            }
+        }
     });
 </script>
 {% endblock %}
