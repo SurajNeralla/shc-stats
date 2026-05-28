@@ -778,44 +778,33 @@
             let battingLines = [];
             let bowlingLines = [];
             
-            // A header-only line for bowling section: the word "bowlers" or "bowling" appearing
-            // with at most 2 other words and no digit-heavy content
-            const bowlingSectionHeaderRe = /^\s*(bowlers?|bowling stats?|bowl)\s*$/i;
-            // Also detect column-header lines that contain bowling column names
-            const bowlingColHeaderRe = /\b(overs?|maiden|econ|eco\.?|wkts?|wickets?)\b/i;
-            const battingColHeaderRe = /\b(batsman|batter|batting|strike\s*rate|\bsr\b|\b4s\b|\b6s\b)\b/i;
+            // Any header-like line (< 3 digits) containing "bowl" → bowling mode
+            // Any header-like line (< 3 digits) containing "batt" → batting mode
+            const bowlingHeaderRe = /bowl/i;
+            const battingHeaderRe = /batt/i;
 
-            // Dismissal line pattern: starts with "c ", "b ", "st ", "lbw", "run out", "hit wicket", "retired"
-            // These lines have no big stat numbers – they describe how the batsman got out
+            // Dismissal line: starts with "c ", "b ", "st ", "lbw", "run out" etc.
             const dismissalRe = /^\s*(c\s|ct\s|caught\s|b\s|bowled\s|st\s|stumped\s|lbw|run\s*out|hit\s*wicket|retired)/i;
 
             lines.forEach(line => {
                 const cleanLine = line.trim();
                 if (!cleanLine) return;
-                
+
                 const lowerLine = cleanLine.toLowerCase();
-                
-                // Detect section header / column header to switch mode
-                if (bowlingSectionHeaderRe.test(cleanLine)) {
-                    currentMode = 'bowling';
-                    return; // skip header line itself
-                }
-                if (bowlingColHeaderRe.test(lowerLine) && !battingColHeaderRe.test(lowerLine)) {
-                    // Only switch if this looks like a header (mostly words, few numbers)
-                    const numCount = (lowerLine.match(/\d/g) || []).length;
-                    if (numCount < 3) {
+                const numCount = (lowerLine.match(/\d/g) || []).length;
+
+                // Switch modes on header-like lines (very few digits)
+                if (numCount < 3) {
+                    if (bowlingHeaderRe.test(lowerLine)) {
                         currentMode = 'bowling';
-                        return;
+                        return; // skip the header line itself
                     }
-                }
-                if (battingColHeaderRe.test(lowerLine) && !bowlingColHeaderRe.test(lowerLine)) {
-                    const numCount = (lowerLine.match(/\d/g) || []).length;
-                    if (numCount < 3) {
+                    if (battingHeaderRe.test(lowerLine)) {
                         currentMode = 'batting';
                         return;
                     }
                 }
-                
+
                 if (currentMode === 'bowling') {
                     bowlingLines.push(cleanLine);
                 } else {
